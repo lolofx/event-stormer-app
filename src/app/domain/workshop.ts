@@ -17,7 +17,7 @@ export interface Workshop {
   readonly activeLevel: Level;
   readonly levelUnlockState: LevelUnlockState;
   readonly viewport: Viewport;
-  readonly stickies: ReadonlyArray<Sticky>;
+  readonly stickies: readonly Sticky[];
   readonly schemaVersion: number;
   readonly createdAt: Date;
   readonly updatedAt: Date;
