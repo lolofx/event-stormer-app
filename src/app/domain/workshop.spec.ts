@@ -115,6 +115,14 @@ describe('Workshop', () => {
       const updated = updateStickyLabel(w, sticky.id, 'New label');
       expect(updated.stickies[0]?.rotation).toBe(1.23);
     });
+
+    it('should not affect other stickies when updating label', () => {
+      const s1 = createSticky(StickyType.DomainEvent, 0, 0);
+      const s2 = createSticky(StickyType.Command, 100, 100, { label: 'Unchanged' });
+      const w = addSticky(addSticky(createWorkshop('Test'), s1), s2);
+      const updated = updateStickyLabel(w, s1.id, 'Changed');
+      expect(updated.stickies[1]?.label).toBe('Unchanged');
+    });
   });
 
   describe('moveSticky', () => {
@@ -131,6 +139,15 @@ describe('Workshop', () => {
       const w = addSticky(createWorkshop('Test'), sticky);
       const updated = moveSticky(w, sticky.id, 100, 100);
       expect(updated.stickies[0]?.rotation).toBe(-1.5);
+    });
+
+    it('should not affect other stickies when moving one (RM04)', () => {
+      const s1 = createSticky(StickyType.DomainEvent, 0, 0);
+      const s2 = createSticky(StickyType.Command, 50, 60);
+      const w = addSticky(addSticky(createWorkshop('Test'), s1), s2);
+      const updated = moveSticky(w, s1.id, 300, 400);
+      expect(updated.stickies[1]?.x).toBe(50);
+      expect(updated.stickies[1]?.y).toBe(60);
     });
   });
 
