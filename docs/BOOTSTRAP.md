@@ -279,6 +279,30 @@ Commentaires JSDoc sur les fonctions publiques.
 Commit par cycle TDD : "test: ...", "feat: ..."
 ```
 
+### Étape 4b — CI GitHub Actions *(à faire avant l'étape 5)*
+
+> **Retour d'expérience** : la CI doit être active dès que le repo GitHub existe, avant toute PR de feature. Sans CI, les PRs restent bloquées en rouge faute de statuts requis.
+
+```
+Deux choses à faire dans la branche chore/ci-setup :
+
+1. .github/workflows/ci.yml :
+   - Trigger : pull_request (toutes branches) + push main
+   - Steps : checkout → setup-node 20 → npm ci → npm run lint
+             → npm run test:coverage → npm run build:prod
+
+2. .github/workflows/azure-deploy.yml :
+   - Trigger : push main + PR vers main uniquement
+   - Utilise Azure/static-web-apps-deploy@v1
+   - Secret AZURE_STATIC_WEB_APPS_API_TOKEN (à brancher après étape 6)
+
+Après merge de cette PR sur main :
+- Configurer branch protection sur main (Settings → Branches) :
+  * Require status check "ci" before merging
+  * Require branches to be up to date
+  * Dismiss stale reviews
+```
+
 ### Étape 5 — Persistance Dexie + fallback
 ```
 core/persistence/ :
@@ -373,14 +397,18 @@ UC-07 : file input, validation schéma, confirmation, remplacement atomique.
 Raccourci Ctrl+N.
 ```
 
-### Étape 12 — CI/CD
+### Étape 12 — Azure Static Web Apps + Lighthouse
 ```
-.github/workflows/ :
-- ci.yml : checkout → node 20 → npm ci → lint → vitest coverage → build prod
-- azure-deploy.yml : deploy main + preview PR
-- Secret AZURE_STATIC_WEB_APPS_API_TOKEN
-- Job Lighthouse CI
-staticwebapp.config.json : navigationFallback, CSP stricte, X-Frame-Options DENY
+La CI GitHub (ci.yml) est déjà active depuis l'étape 4b.
+Cette étape finalise le déploiement :
+
+1. Créer la ressource Azure SWA (portail ou CLI, plan gratuit)
+2. Récupérer AZURE_STATIC_WEB_APPS_API_TOKEN → GitHub secret
+3. azure-deploy.yml : main → prod, PR vers main → preview env
+4. staticwebapp.config.json :
+   - navigationFallback → index.html
+   - CSP stricte, X-Frame-Options: DENY, Referrer-Policy
+5. Lighthouse CI (score ≥ 90 perf + accessibilité)
 ```
 
 ## 7. Stratégie TDD
@@ -396,19 +424,25 @@ Doubles : `vi.fn()`, `vi.mock()`, `fake-indexeddb` pour Dexie, golden files pour
 
 ## 8. CI/CD GitHub → Azure Static Web Apps
 
-### ci.yml
-1. Checkout → Setup Node 20
-2. `rtk npm ci`
-3. `rtk npx ng lint`
-4. `rtk npx vitest run --coverage`
-5. `rtk npx ng build --configuration=production`
+### Séquençage
 
-### azure-deploy.yml
-- main → prod, PR → preview env
+| Phase | Quand | Ce qui est fait |
+|---|---|---|
+| **4b** (tôt) | Avant étape 5 | `ci.yml` actif sur toutes les PRs |
+| **12** (tard) | Après étape 6 | Azure SWA branché, Lighthouse CI |
+
+### ci.yml (étape 4b)
+- Trigger : `pull_request` (toutes branches) + `push main`
+- Steps : checkout → setup-node 20 → npm ci → lint → test:coverage → build:prod
+- Node : 20 LTS (aligner avec Azure SWA)
+
+### azure-deploy.yml (étape 12)
+- Trigger : `push main` + `pull_request` vers main
 - Action `Azure/static-web-apps-deploy@v1`
 - Secret `AZURE_STATIC_WEB_APPS_API_TOKEN`
+- Preview environment sur chaque PR vers main
 
-### staticwebapp.config.json
+### staticwebapp.config.json (étape 12)
 - `navigationFallback` → `index.html`
 - CSP stricte, `X-Frame-Options: DENY`, `Referrer-Policy`
 
@@ -437,4 +471,4 @@ Doubles : `vi.fn()`, `vi.mock()`, `fake-indexeddb` pour Dexie, golden files pour
 
 ---
 
-**Prochaine étape concrète** : session Claude Code → §0 (récupération CLAUDE.md de devnotes-garden-app, validation skills/MCP) → §6 étape 1.
+**Prochaine étape concrète** : merger les PRs #1–#3 (tailwind → material → domain) puis démarrer l'étape 5 (Dexie).
