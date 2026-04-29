@@ -1,0 +1,45 @@
+:root {
+  /* Canvas */
+  --canvas-bg: #fafaf7;
+  --canvas-grid: #e5e5e0;
+  --canvas-grid-size: 24px;
+
+  /* UI surfaces */
+  --surface: #ffffff;
+  --border: #e8e8e3;
+
+  /* Text */
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b6b;
+
+  /* Accents */
+  --accent: #0a0a0a;
+  --accent-positive: #10b981;
+  --accent-danger: #ef4444;
+
+  /* Sticky colors (convention Brandolini) */
+  --sticky-event: #ff9900;
+  --sticky-event-border: #b36b00;
+  --sticky-command: #4a90e2;
+  --sticky-command-border: #2e5c8a;
+  --sticky-actor: #ffeb3b;
+  --sticky-actor-border: #b8a82a;
+  --sticky-policy: #9c27b0;
+  --sticky-policy-border: #6a1b9a;
+  --sticky-external: #ec407a;
+  --sticky-external-border: #ad1457;
+  --sticky-aggregate: #fff59d;
+  --sticky-aggregate-border: #bfa726;
+  --sticky-readmodel: #66bb6a;
+  --sticky-readmodel-border: #2e7d32;
+  --sticky-context-border: #424242;
+
+  /* Typography */
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+
+  /* Shadows */
+  --shadow-sticky-rest: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-sticky-hover: 0 8px 24px rgba(0, 0, 0, 0.15);
+  --shadow-dock: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
