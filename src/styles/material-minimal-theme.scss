@@ -1,2 +1,29 @@
-// Material theme overrides — MatDialog and MatSnackBar only.
-// Applied after Angular Material initialization to neutralize Material 3 violet defaults.
+// Material theme overrides — MatDialog et MatSnackBar uniquement.
+// Palette azure (neutre) remplace le violet M3 par défaut.
+@use '@angular/material' as mat;
+
+$neutral-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$azure-palette,
+  ),
+  typography: (
+    plain-family: (Geist, -apple-system, BlinkMacSystemFont, sans-serif),
+    brand-family: (Geist, -apple-system, BlinkMacSystemFont, sans-serif),
+  ),
+));
+
+html {
+  @include mat.core();
+  @include mat.dialog-theme($neutral-theme);
+  @include mat.snack-bar-theme($neutral-theme);
+  @include mat.button-theme($neutral-theme);
+
+  // Surfaces dialog et snackbar alignées sur les tokens du projet
+  --mdc-dialog-container-color: var(--surface);
+  --mdc-dialog-supporting-text-color: var(--text-secondary);
+  --mdc-dialog-subhead-color: var(--text-primary);
+  --mdc-snackbar-container-color: var(--text-primary);
+  --mdc-snackbar-supporting-text-color: var(--surface);
+  --mat-snack-bar-button-color: var(--accent-positive);
+}
