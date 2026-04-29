@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk git *)",
+      "Bash(rtk ls *)",
+      "Bash(rtk npx *)",
+      "Bash(npx @angular/cli@latest version)",
+      "Bash(npx @angular/cli@latest new --help)",
+      "Bash(npx @angular/cli@21 new eventstormer --directory . --routing --style=scss --no-ssr --zoneless --skip-git --force)",
+      "Bash(mv README.md.bak README.md)",
+      "Bash(cat .gitignore.bak)",
+      "Bash(rm .gitignore.bak)",
+      "Bash(npx vitest *)",
+      "Bash(npx ng *)",
+      "Bash(rtk npm *)"
+    ]
+  }
+}

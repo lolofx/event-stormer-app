@@ -11,7 +11,7 @@ Angular 21 zoneless, 100 % frontend, déployé sur Azure Static Web Apps.
 - **Python** : non installé — ne jamais utiliser Python ni scripts `.py`
 - **gh CLI** : installé dans `C:\Program Files\GitHub CLI\` mais hors PATH Git Bash.
   Avant chaque `rtk gh ...` : `export PATH="$PATH:/c/Program Files/GitHub CLI"`
-- **rtk** : préfixe obligatoire sur toutes les commandes (`rtk npm ci`, `rtk git status`…)
+- **rtk** : préfixe obligatoire sur toutes les commandes (`rtk npm ci`, `rtk git status`…). **Exception : `npx` — utiliser directement sans rtk.**
 
 ## Stack
 
@@ -78,7 +78,7 @@ commit avec tests rouges, `any`, `@ts-ignore`, `--no-verify`, nouvelle dépendan
 ## Langue
 
 - Code, commentaires, noms de variables : **anglais**
-- Commits, documentation projet, messages utilisateur : **français**
+- Commits (messages clairs et bref, sans signature), documentation projet, messages utilisateur : **français**
 
 ## Skills
 
@@ -95,11 +95,12 @@ commit avec tests rouges, `any`, `@ts-ignore`, `--no-verify`, nouvelle dépendan
 ## Commandes projet
 
 ```bash
-rtk npm ci                                    # install
-rtk npx ng serve                              # dev
-rtk npx vitest                                # watch (TDD)
-rtk npx vitest run --coverage                 # one-shot + coverage
-rtk npx ng lint && rtk npx vitest run && rtk npx ng build --configuration=production
+rtk npm ci                                                              # install
+rtk npm start                                                           # dev
+rtk npm run test:watch                                                  # watch (TDD)
+rtk npm test                                                            # one-shot
+rtk npm run test:coverage                                               # one-shot + coverage
+rtk npm run lint && rtk npm test && rtk npm run build:prod              # pré-commit
 ```
 
 ## Workflow
@@ -123,6 +124,6 @@ Demande avant d'agir. Utilise les specs dans `docs/`. Ne lis pas 30 fichiers pou
 ## Rappels
 
 - `/clear` entre deux tâches indépendantes.
-- Plan mode avant les étapes complexes (6-11 du BOOTSTRAP).
+- Plan mode avant les étapes complexes (6-11 du BOOTSTRAP) MAIS EN RESTANT PRAGMATIQUE, il faut le plan oui, mais peut-être pas toute l'implémentation au cas où des changements arriveraient.
 - > 50 lignes d'un coup sans test préalable = retour au TDD.
 - Erreur récurrente malgré ce fichier → signaler pour ajouter une règle ici.
