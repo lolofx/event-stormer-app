@@ -17,11 +17,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install dependencies
-        # npm ci utilise le lockfile Windows-only (pas de binaires Linux rollup) — npm install résout les optionnels natifs à l'install
-        run: npm install
+        # --no-package-lock ignore le lockfile généré sous Windows qui ne contient que les binaires rollup win32
+        run: npm install --no-package-lock
 
       - name: Lint
         run: npm run lint
