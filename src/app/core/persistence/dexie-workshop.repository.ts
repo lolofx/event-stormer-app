@@ -43,11 +43,16 @@ export class DexieWorkshopRepository implements WorkshopRepository {
   async load(): Promise<Workshop | null> {
     const record = await this.db.workshops.get(CURRENT_KEY);
     if (!record) return null;
-    const { _key, createdAt, updatedAt, ...rest } = record;
     return {
-      ...rest,
-      createdAt: new Date(createdAt),
-      updatedAt: new Date(updatedAt),
+      id: record.id,
+      name: record.name,
+      activeLevel: record.activeLevel,
+      levelUnlockState: record.levelUnlockState,
+      viewport: record.viewport,
+      stickies: record.stickies,
+      schemaVersion: record.schemaVersion,
+      createdAt: new Date(record.createdAt),
+      updatedAt: new Date(record.updatedAt),
     };
   }
 
