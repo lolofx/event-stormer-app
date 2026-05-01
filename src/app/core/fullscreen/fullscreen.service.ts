@@ -7,7 +7,7 @@ export class FullscreenService {
   readonly isFullscreen = signal(false);
 
   constructor() {
-    const handler = () => this.isFullscreen.set(!!document.fullscreenElement);
+    const handler = (): void => this.isFullscreen.set(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handler);
     this.destroyRef.onDestroy(() => document.removeEventListener('fullscreenchange', handler));
   }
