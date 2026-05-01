@@ -15,18 +15,35 @@ Angular 21 zoneless · Tailwind CSS · Azure Static Web Apps.
 
 ```bash
 # Développement
-rtk npx ng serve
+rtk npm start
 
-# Tests
-rtk npx vitest run
-rtk npx vitest run --coverage
+# Tests (TDD)
+rtk npm run test:watch
+
+# Tests one-shot + coverage
+rtk npm test
+rtk npm run test:coverage
 
 # Build production
-rtk npx ng build --configuration=production
+rtk npm run build:prod
 
 # Lint
-rtk npx ng lint
+rtk npm run lint
 ```
+
+## État du projet
+
+| Étape | Statut |
+|---|---|
+| Angular 21 init | ✅ mergé |
+| Tailwind + tokens + Geist | ✅ mergé |
+| Angular Material minimal | ✅ mergé |
+| Domain layer TDD (RM01-RM16) | ✅ mergé |
+| CI GitHub Actions | ✅ actif |
+| Dexie persistence | ⏳ à venir |
+| Canvas SVG + pan/zoom | ⏳ à venir |
+| UI components + dock | ⏳ à venir |
+| Azure Static Web Apps | ⏳ après canvas |
 
 ## Documentation
 
@@ -34,6 +51,7 @@ rtk npx ng lint
 - [Plan de bootstrap](docs/BOOTSTRAP.md)
 - [Décisions d'architecture](docs/adr/)
 
-## Déploiement
+## CI/CD
 
-Azure Static Web Apps — CI/CD via GitHub Actions.
+GitHub Actions — CI verte requise avant tout merge sur `main`.
+Azure Static Web Apps — déploiement configuré à l'étape 12 (après canvas).
