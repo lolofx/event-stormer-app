@@ -37,6 +37,7 @@ export interface SegmentItem {
           [class.text-text-secondary]="item.value !== selectedValue() && !item.disabled"
           [class.opacity-40]="item.disabled"
           [class.cursor-not-allowed]="item.disabled ?? false"
+          [attr.data-value]="item.value"
           [attr.aria-pressed]="item.value === selectedValue()"
           [attr.aria-disabled]="item.disabled ?? false"
           [disabled]="item.disabled ?? false"

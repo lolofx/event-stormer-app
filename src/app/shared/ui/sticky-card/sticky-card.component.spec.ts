@@ -11,7 +11,7 @@ describe('StickyCardComponent', () => {
     rotation: number;
     selected: boolean;
     isDragging: boolean;
-  }> = {}) {
+  }> = {}): HTMLElement {
     fixture = TestBed.createComponent(StickyCardComponent);
     fixture.componentRef.setInput('type', inputs.type ?? StickyType.DomainEvent);
     if (inputs.label !== undefined) fixture.componentRef.setInput('label', inputs.label);

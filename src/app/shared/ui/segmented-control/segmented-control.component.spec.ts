@@ -18,25 +18,30 @@ describe('SegmentedControlComponent', () => {
   function create(overrides: { selectedValue?: string; items?: SegmentItem[] } = {}): {
     fixture: ComponentFixture<SegmentedControlComponent>;
     el: HTMLElement;
+    btn: (value: string) => HTMLButtonElement;
   } {
     const fixture = TestBed.createComponent(SegmentedControlComponent);
     fixture.componentRef.setInput('items', overrides.items ?? ITEMS);
     fixture.componentRef.setInput('selectedValue', overrides.selectedValue ?? 'big');
     fixture.detectChanges();
-    return { fixture, el: fixture.nativeElement as HTMLElement };
+    const el = fixture.nativeElement as HTMLElement;
+    const btn = (value: string): HTMLButtonElement =>
+      el.querySelector(`button[data-value="${value}"]`) as HTMLButtonElement;
+    return { fixture, el, btn };
   }
 
   it('should render all items as buttons', () => {
     const { el } = create();
-    const buttons = el.querySelectorAll('button');
-    expect(buttons.length).toBe(ITEMS.length);
+    expect(el.querySelectorAll('button').length).toBe(ITEMS.length);
   });
 
   it('should apply text-white to selected item', () => {
-    const { fixture } = create({ selectedValue: 'big' });
-    const buttons = fixture.debugElement.queryAll(By.css('button'));
-    expect(buttons[0]!.nativeElement.classList).toContain('text-white');
-    expect(buttons[1]!.nativeElement.classList).not.toContain('text-white');
+    const { fixture, btn } = create({ selectedValue: 'big' });
+    const bigBtn = fixture.debugElement.query(By.css('button[data-value="big"]'));
+    const processBtn = fixture.debugElement.query(By.css('button[data-value="process"]'));
+    expect(bigBtn.nativeElement.classList).toContain('text-white');
+    expect(processBtn.nativeElement.classList).not.toContain('text-white');
+    expect(btn('big')).toBeTruthy(); // btn helper works
   });
 
   it('should emit selectedChange with value when enabled item is clicked', () => {
@@ -44,46 +49,44 @@ describe('SegmentedControlComponent', () => {
       { label: 'A', value: 'a' },
       { label: 'B', value: 'b' },
     ];
-    const { fixture } = create({ items, selectedValue: 'a' });
+    const { fixture, btn } = create({ items, selectedValue: 'a' });
     let emitted: string | null = null;
     fixture.componentInstance.selectedChange.subscribe((v: string) => { emitted = v; });
 
-    fixture.debugElement.queryAll(By.css('button'))[1]!.nativeElement.click();
+    btn('b').click();
 
     expect(emitted).toBe('b');
   });
 
   it('should not emit when disabled item is clicked', () => {
-    const { fixture } = create({ selectedValue: 'big' });
+    const { fixture, btn } = create({ selectedValue: 'big' });
     let emitCount = 0;
     fixture.componentInstance.selectedChange.subscribe(() => { emitCount++; });
 
-    fixture.debugElement.queryAll(By.css('button'))[1]!.nativeElement.click();
+    btn('process').click();
 
     expect(emitCount).toBe(0);
   });
 
   it('should not emit when clicking already selected item', () => {
-    const { fixture } = create({ selectedValue: 'big' });
+    const { fixture, btn } = create({ selectedValue: 'big' });
     let emitCount = 0;
     fixture.componentInstance.selectedChange.subscribe(() => { emitCount++; });
 
-    fixture.debugElement.queryAll(By.css('button'))[0]!.nativeElement.click();
+    btn('big').click();
 
     expect(emitCount).toBe(0);
   });
 
   it('should mark disabled buttons with aria-disabled', () => {
-    const { fixture } = create();
-    const buttons = fixture.debugElement.queryAll(By.css('button'));
-    expect(buttons[1]!.nativeElement.getAttribute('aria-disabled')).toBe('true');
+    const { btn } = create();
+    expect(btn('process').getAttribute('aria-disabled')).toBe('true');
   });
 
   it('should mark selected button with aria-pressed true', () => {
-    const { fixture } = create({ selectedValue: 'big' });
-    const buttons = fixture.debugElement.queryAll(By.css('button'));
-    expect(buttons[0]!.nativeElement.getAttribute('aria-pressed')).toBe('true');
-    expect(buttons[1]!.nativeElement.getAttribute('aria-pressed')).toBe('false');
+    const { btn } = create({ selectedValue: 'big' });
+    expect(btn('big').getAttribute('aria-pressed')).toBe('true');
+    expect(btn('process').getAttribute('aria-pressed')).toBe('false');
   });
 
   it('should have group role on container', () => {
