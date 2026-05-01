@@ -7,10 +7,9 @@ Angular 21 zoneless, 100 % frontend, déployé sur Azure Static Web Apps.
 
 ## Environnement
 
-- **OS** : Windows — syntaxe bash Unix (Git Bash), jamais PowerShell natif
-- **Python** : non installé — ne jamais utiliser Python ni scripts `.py`
-- **gh CLI** : installé dans `C:\Program Files\GitHub CLI\` mais hors PATH Git Bash.
-  Avant chaque `rtk gh ...` : `export PATH="$PATH:/c/Program Files/GitHub CLI"`
+- **OS** : WSL2 (Linux) — syntaxe bash Unix, jamais PowerShell
+- **Python** : Python 3.12 disponible (`/usr/bin/python3`) si besoin ponctuel
+- **gh CLI** : disponible nativement dans WSL (`/usr/bin/gh`), aucun export PATH nécessaire
 - **rtk** : préfixe obligatoire sur toutes les commandes (`rtk npm ci`, `rtk git status`…). **Exception : `npx` — utiliser directement sans rtk.**
 
 ## Stack
