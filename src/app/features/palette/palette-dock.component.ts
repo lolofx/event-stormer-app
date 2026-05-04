@@ -53,7 +53,6 @@ const DOCK_LABELS: Readonly<Record<StickyType, string>> = {
               <div
                 cdkDrag
                 [cdkDragData]="item.type"
-                [cdkDragFreeDragPosition]="DRAG_ORIGIN"
                 class="transition-transform duration-150 cursor-grab hover:scale-105 active:cursor-grabbing"
                 style="touch-action: none;"
                 (cdkDragEnded)="onDragEnded($event, item.type)"
@@ -97,13 +96,14 @@ export class PaletteDockComponent {
 
   protected readonly tooltips = STICKY_TOOLTIPS;
   protected readonly labels = DOCK_LABELS;
-  protected readonly DRAG_ORIGIN = { x: 0, y: 0 };
 
   protected readonly dockItems = computed(() =>
     availableTypes(this.workshopStore.levelUnlockState()).map((type) => ({ type }))
   );
 
   protected onDragEnded(event: CdkDragEnd, type: StickyType): void {
+    // Ignore clicks (distance < 5px) — only emit for real drags
+    if (Math.abs(event.distance.x) < 5 && Math.abs(event.distance.y) < 5) return;
     this.stickyDragEnded.emit({ type, screenX: event.dropPoint.x, screenY: event.dropPoint.y });
   }
 }
