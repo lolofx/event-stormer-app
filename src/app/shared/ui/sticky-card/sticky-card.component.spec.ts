@@ -33,9 +33,18 @@ describe('StickyCardComponent', () => {
     expect(el.textContent?.trim()).toBe('Commande passée');
   });
 
-  it('should display placeholder when label is empty', () => {
+  it('should display nothing when label is empty and showEmptyPlaceholder is false', () => {
     const el = create({ label: '' });
-    expect(el.textContent?.trim()).toBe('sans libellé');
+    expect(el.textContent?.trim()).toBe('');
+  });
+
+  it('should display placeholder when label is empty and showEmptyPlaceholder is true', () => {
+    const fixture = TestBed.createComponent(StickyCardComponent);
+    fixture.componentRef.setInput('type', StickyType.DomainEvent);
+    fixture.componentRef.setInput('label', '');
+    fixture.componentRef.setInput('showEmptyPlaceholder', true);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent?.trim()).toBe('sans libellé');
   });
 
   it('should apply rotation transform', () => {

@@ -5,7 +5,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { CanvasStore } from './canvas.store';
 import { FullscreenService } from '../../core/fullscreen/fullscreen.service';
 import { BackgroundGridComponent } from './background-grid.component';
@@ -27,20 +26,13 @@ import type { Sticky } from '../../domain/sticky';
     ActionBarComponent,
     EditableTitleComponent,
     PaletteDockComponent,
-    CdkDropList,
   ],
   template: `
-    <!-- Canvas host — drop target for palette items -->
     <div
       class="canvas-host"
       [class.cursor-grabbing]="isPanning()"
       [class.cursor-grab]="isSpaceHeld() && !isPanning()"
       tabindex="0"
-      cdkDropList
-      id="canvas-drop-list"
-      [cdkDropListSortingDisabled]="true"
-      [cdkDropListConnectedTo]="['palette-drop-list']"
-      (cdkDropListDropped)="onDrop($event)"
       (mousedown)="onMouseDown($event)"
       (wheel)="onWheel($event)"
     >
@@ -48,12 +40,7 @@ import type { Sticky } from '../../domain/sticky';
 
       <!-- SVG canvas: stickies follow pan/zoom transform -->
       <svg class="canvas-svg" aria-label="Canvas Event Storming">
-        <!--
-          CDK DragDrop + CSS scale trap:
-          The SVG content group uses scale(zoom). CDK computes positions in screen
-          coordinates, so we use screenToCanvas() at drop time to get canvas coords.
-          Moving stickies ON the canvas (future step) will need the same treatment.
-        -->
+        <!-- screenToCanvas() used at drag-end and on sticky mousedown — SVG scale trap, see coordinate-translator.ts -->
         <g [attr.transform]="store.svgTransform()">
           @for (s of stickies(); track s.id) {
             <foreignObject
@@ -69,7 +56,9 @@ import type { Sticky } from '../../domain/sticky';
                 [rotation]="s.rotation"
                 [selected]="selectedId() === s.id"
                 [isEditing]="editingId() === s.id"
-                (click)="onStickyClick(s)"
+                [isDragging]="draggingId() === s.id"
+                [showEmptyPlaceholder]="true"
+                (mousedown)="onStickyMouseDown($event, s)"
                 (labelChange)="workshopStore.updateLabel(s.id, $event)"
                 (editingDone)="clearEditing()"
               />
@@ -89,6 +78,7 @@ import type { Sticky } from '../../domain/sticky';
     <app-palette-dock
       [collapsed]="dockCollapsed()"
       (toggleCollapsed)="dockCollapsed.set(!dockCollapsed())"
+      (stickyDragEnded)="onPaletteDrop($event)"
     />
 
     <!-- Barre d'actions — bas-droite -->
@@ -158,18 +148,22 @@ export class CanvasComponent {
   protected readonly dockCollapsed = signal(false);
   protected readonly selectedId = signal<string | null>(null);
   protected readonly editingId = signal<string | null>(null);
+  protected readonly draggingId = signal<string | null>(null);
 
   protected readonly stickies = this.workshopStore.stickies;
 
   private lastMouseX = 0;
   private lastMouseY = 0;
 
+  // Sticky move tracking
+  private stickyMove: { id: string; startX: number; startY: number; startCX: number; startCY: number } | null = null;
+  private hasMoved = false;
+
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent): void {
-    if (e.code === 'Space' && !e.repeat) {
-      e.preventDefault();
-      this.isSpaceHeld.set(true);
-    }
+    if (e.code === 'Space' && !e.repeat) { e.preventDefault(); this.isSpaceHeld.set(true); }
+    // Guard hotkeys while editing text in a sticky
+    if (this.editingId()) return;
     if (e.code === 'KeyF') void this.fullscreen.toggle();
     if (e.code === 'KeyD') this.dockCollapsed.set(!this.dockCollapsed());
     if (e.ctrlKey && e.code === 'KeyE') { e.preventDefault(); this.onExport(); }
@@ -182,23 +176,44 @@ export class CanvasComponent {
 
   @HostListener('document:keyup', ['$event'])
   onKeyUp(e: KeyboardEvent): void {
-    if (e.code === 'Space') {
-      this.isSpaceHeld.set(false);
-      this.isPanning.set(false);
-    }
+    if (e.code === 'Space') { this.isSpaceHeld.set(false); this.isPanning.set(false); }
   }
 
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(e: MouseEvent): void {
-    if (!this.isPanning()) return;
-    this.store.pan(e.clientX - this.lastMouseX, e.clientY - this.lastMouseY);
-    this.lastMouseX = e.clientX;
-    this.lastMouseY = e.clientY;
+    if (this.isPanning()) {
+      this.store.pan(e.clientX - this.lastMouseX, e.clientY - this.lastMouseY);
+      this.lastMouseX = e.clientX;
+      this.lastMouseY = e.clientY;
+      return;
+    }
+    if (this.stickyMove) {
+      const rect = this.el.nativeElement.getBoundingClientRect();
+      const cp = screenToCanvas(e.clientX, e.clientY, rect.left, rect.top, this.store.viewport());
+      const dx = cp.x - this.stickyMove.startCX;
+      const dy = cp.y - this.stickyMove.startCY;
+      if (!this.hasMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+        this.hasMoved = true;
+        this.draggingId.set(this.stickyMove.id);
+      }
+      if (this.hasMoved) {
+        this.workshopStore.moveSticky(this.stickyMove.id, this.stickyMove.startX + dx, this.stickyMove.startY + dy);
+      }
+    }
   }
 
   @HostListener('document:mouseup')
   onMouseUp(): void {
     this.isPanning.set(false);
+    if (this.stickyMove) {
+      if (!this.hasMoved) {
+        // Short click without move → enter edit mode
+        this.editingId.set(this.stickyMove.id);
+      }
+      this.draggingId.set(null);
+      this.stickyMove = null;
+      this.hasMoved = false;
+    }
   }
 
   protected onMouseDown(e: MouseEvent): void {
@@ -210,6 +225,15 @@ export class CanvasComponent {
     }
   }
 
+  protected onStickyMouseDown(e: MouseEvent, s: Sticky): void {
+    e.stopPropagation();
+    this.selectedId.set(s.id);
+    const rect = this.el.nativeElement.getBoundingClientRect();
+    const cp = screenToCanvas(e.clientX, e.clientY, rect.left, rect.top, this.store.viewport());
+    this.stickyMove = { id: s.id, startX: s.x, startY: s.y, startCX: cp.x, startCY: cp.y };
+    this.hasMoved = false;
+  }
+
   protected onWheel(e: WheelEvent): void {
     e.preventDefault();
     const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
@@ -217,26 +241,20 @@ export class CanvasComponent {
     this.store.zoom(factor, e.clientX - rect.left, e.clientY - rect.top);
   }
 
-  protected onDrop(event: CdkDragDrop<StickyType[]>): void {
-    const type = event.item.data as StickyType;
+  protected onPaletteDrop(event: { type: StickyType; screenX: number; screenY: number }): void {
     const rect = this.el.nativeElement.getBoundingClientRect();
-    const { x, y } = screenToCanvas(
-      event.dropPoint.x, event.dropPoint.y,
-      rect.left, rect.top,
-      this.store.viewport(),
-    );
-    this.workshopStore.addSticky(type, x, y);
-    // Immediately enter edit mode on the newly created sticky
+    // Ignore if dropped outside canvas or on a UI overlay
+    if (event.screenX < rect.left || event.screenX > rect.right ||
+        event.screenY < rect.top || event.screenY > rect.bottom) return;
+    const target = document.elementFromPoint(event.screenX, event.screenY);
+    if (target?.closest('app-palette-dock') || target?.closest('app-action-bar') || target?.closest('app-editable-title')) return;
+    const { x, y } = screenToCanvas(event.screenX, event.screenY, rect.left, rect.top, this.store.viewport());
+    this.workshopStore.addSticky(event.type, x, y);
     const newSticky = this.stickies()[this.stickies().length - 1];
     if (newSticky) {
       this.selectedId.set(newSticky.id);
       this.editingId.set(newSticky.id);
     }
-  }
-
-  protected onStickyClick(s: Sticky): void {
-    this.selectedId.set(s.id);
-    this.editingId.set(s.id);
   }
 
   protected clearEditing(): void {
@@ -249,7 +267,6 @@ export class CanvasComponent {
   }
 
   protected onExport(): void {
-    // Wired in étape 10
     console.log('Export Markdown — étape 10');
   }
 }
