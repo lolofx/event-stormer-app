@@ -2,7 +2,6 @@ import {
   Component,
   ElementRef,
   HostListener,
-  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -69,29 +68,16 @@ import type { Sticky } from '../../domain/sticky';
                 [label]="s.label"
                 [rotation]="s.rotation"
                 [selected]="selectedId() === s.id"
+                [isEditing]="editingId() === s.id"
                 (click)="onStickyClick(s)"
+                (labelChange)="workshopStore.updateLabel(s.id, $event)"
+                (editingDone)="clearEditing()"
               />
             </foreignObject>
           }
         </g>
       </svg>
     </div>
-
-    <!-- Inline label editor — shown above selected sticky -->
-    @if (editingSticky(); as editing) {
-      <input
-        class="sticky-editor font-sans font-medium text-base bg-transparent border-none outline-none text-center w-36"
-        [value]="editing.label"
-        [attr.aria-label]="'Libellé du sticky ' + editing.type"
-        [style.left.px]="editingScreenX()"
-        [style.top.px]="editingScreenY()"
-        (input)="onLabelInput($event, editing.id)"
-        (blur)="onLabelBlur(editing.id, $event)"
-        (keydown.enter)="clearEditing()"
-        (keydown.escape)="clearEditing()"
-        #editorInput
-      />
-    }
 
     <!-- Titre éditable — haut-gauche -->
     <app-editable-title
@@ -159,7 +145,6 @@ import type { Sticky } from '../../domain/sticky';
     '.canvas-svg { position: absolute; inset: 0; width: 100%; height: 100%; }',
     '.cursor-grab { cursor: grab; }',
     '.cursor-grabbing { cursor: grabbing; }',
-    '.sticky-editor { position: fixed; z-index: 60; transform: translate(-50%, -50%); padding: 4px 8px; }',
   ],
 })
 export class CanvasComponent {
@@ -175,28 +160,6 @@ export class CanvasComponent {
   protected readonly editingId = signal<string | null>(null);
 
   protected readonly stickies = this.workshopStore.stickies;
-
-  protected readonly editingSticky = computed<Sticky | null>(() => {
-    const id = this.editingId();
-    if (!id) return null;
-    return this.stickies().find((s) => s.id === id) ?? null;
-  });
-
-  protected readonly editingScreenX = computed(() => {
-    const s = this.editingSticky();
-    if (!s) return 0;
-    const { panX, zoom } = this.store.viewport();
-    const rect = this.el.nativeElement.getBoundingClientRect();
-    return s.x * zoom + panX + rect.left + (s.width * zoom) / 2;
-  });
-
-  protected readonly editingScreenY = computed(() => {
-    const s = this.editingSticky();
-    if (!s) return 0;
-    const { panY, zoom } = this.store.viewport();
-    const rect = this.el.nativeElement.getBoundingClientRect();
-    return s.y * zoom + panY + rect.top + (s.height * zoom) / 2;
-  });
 
   private lastMouseX = 0;
   private lastMouseY = 0;
@@ -274,17 +237,6 @@ export class CanvasComponent {
   protected onStickyClick(s: Sticky): void {
     this.selectedId.set(s.id);
     this.editingId.set(s.id);
-  }
-
-  protected onLabelInput(e: Event, id: string): void {
-    const value = (e.target as HTMLInputElement).value;
-    this.workshopStore.updateLabel(id, value);
-  }
-
-  protected onLabelBlur(id: string, e: FocusEvent): void {
-    const value = (e.target as HTMLInputElement).value;
-    this.workshopStore.updateLabel(id, value);
-    this.clearEditing();
   }
 
   protected clearEditing(): void {

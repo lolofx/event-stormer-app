@@ -33,9 +33,9 @@ describe('StickyCardComponent', () => {
     expect(el.textContent?.trim()).toBe('Commande passée');
   });
 
-  it('should display empty string when label is empty', () => {
+  it('should display placeholder when label is empty', () => {
     const el = create({ label: '' });
-    expect(el.textContent?.trim()).toBe('');
+    expect(el.textContent?.trim()).toBe('sans libellé');
   });
 
   it('should apply rotation transform', () => {
