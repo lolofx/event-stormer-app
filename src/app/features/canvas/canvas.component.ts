@@ -1,50 +1,23 @@
 import {
   Component,
+  ElementRef,
+  HostListener,
+  computed,
   inject,
   signal,
-  computed,
-  HostListener,
-  ElementRef,
 } from '@angular/core';
+import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { CanvasStore } from './canvas.store';
 import { FullscreenService } from '../../core/fullscreen/fullscreen.service';
 import { BackgroundGridComponent } from './background-grid.component';
-import { StickyType } from '../../domain/sticky-type';
 import { StickyCardComponent } from '../../shared/ui/sticky-card/sticky-card.component';
-import { DockComponent } from '../../shared/ui/dock/dock.component';
 import { ActionBarComponent } from '../../shared/ui/action-bar/action-bar.component';
 import { EditableTitleComponent } from '../../shared/ui/editable-title/editable-title.component';
-
-interface DockItem {
-  readonly type: StickyType;
-  readonly label: string;
-  readonly locked: boolean;
-}
-
-interface PreviewSticky {
-  readonly type: StickyType;
-  readonly label: string;
-  readonly x: number;
-  readonly y: number;
-  readonly rotation: number;
-}
-
-const DOCK_ITEMS: DockItem[] = [
-  { type: StickyType.DomainEvent, label: 'Event', locked: false },
-  { type: StickyType.Command, label: 'Command', locked: true },
-  { type: StickyType.Actor, label: 'Actor', locked: true },
-  { type: StickyType.Policy, label: 'Policy', locked: true },
-  { type: StickyType.ExternalSystem, label: 'External', locked: true },
-];
-
-// Alpha preview — remplacé par WorkshopStore en étape 8
-const PREVIEW_STICKIES: PreviewSticky[] = [
-  { type: StickyType.DomainEvent, label: 'Commande passée',  x: 120, y: 150, rotation: -1.2 },
-  { type: StickyType.DomainEvent, label: 'Paiement validé',  x: 360, y: 120, rotation:  0.8 },
-  { type: StickyType.DomainEvent, label: 'Colis expédié',    x: 600, y: 155, rotation: -0.5 },
-  { type: StickyType.Command,     label: 'Passer commande',  x:  70, y: 340, rotation:  1.1 },
-  { type: StickyType.Actor,       label: 'Client',           x: 490, y: 340, rotation: -0.7 },
-];
+import { PaletteDockComponent } from '../palette/palette-dock.component';
+import { WorkshopStore } from '../workshop/workshop.store';
+import { StickyType } from '../../domain/sticky-type';
+import { screenToCanvas } from './coordinate-translator';
+import type { Sticky } from '../../domain/sticky';
 
 @Component({
   selector: 'app-canvas',
@@ -52,32 +25,38 @@ const PREVIEW_STICKIES: PreviewSticky[] = [
   imports: [
     BackgroundGridComponent,
     StickyCardComponent,
-    DockComponent,
     ActionBarComponent,
     EditableTitleComponent,
+    PaletteDockComponent,
+    CdkDropList,
   ],
   template: `
-    <!-- Canvas host -->
+    <!-- Canvas host — drop target for palette items -->
     <div
       class="canvas-host"
       [class.cursor-grabbing]="isPanning()"
       [class.cursor-grab]="isSpaceHeld() && !isPanning()"
       tabindex="0"
+      cdkDropList
+      id="canvas-drop-list"
+      [cdkDropListSortingDisabled]="true"
+      [cdkDropListConnectedTo]="['palette-drop-list']"
+      (cdkDropListDropped)="onDrop($event)"
       (mousedown)="onMouseDown($event)"
       (wheel)="onWheel($event)"
     >
       <app-background-grid [viewport]="store.viewport()" />
 
       <!-- SVG canvas: stickies follow pan/zoom transform -->
-      <svg class="canvas-svg" [attr.aria-label]="'Canvas Event Storming'">
+      <svg class="canvas-svg" aria-label="Canvas Event Storming">
         <!--
-          IMPORTANT — CDK DragDrop + CSS scale:
-          When this SVG is scaled via a CSS transform on the host, CDK DragDrop
-          computes incorrect drop positions unless the current zoom is passed as
-          input to the cdkDrag directive. Wired in étape 8 (palette dock).
+          CDK DragDrop + CSS scale trap:
+          The SVG content group uses scale(zoom). CDK computes positions in screen
+          coordinates, so we use screenToCanvas() at drop time to get canvas coords.
+          Moving stickies ON the canvas (future step) will need the same treatment.
         -->
         <g [attr.transform]="store.svgTransform()">
-          @for (s of previewStickies; track s.label) {
+          @for (s of stickies(); track s.id) {
             <foreignObject
               [attr.x]="s.x"
               [attr.y]="s.y"
@@ -89,6 +68,8 @@ const PREVIEW_STICKIES: PreviewSticky[] = [
                 [type]="s.type"
                 [label]="s.label"
                 [rotation]="s.rotation"
+                [selected]="selectedId() === s.id"
+                (click)="onStickyClick(s)"
               />
             </foreignObject>
           }
@@ -96,46 +77,33 @@ const PREVIEW_STICKIES: PreviewSticky[] = [
       </svg>
     </div>
 
+    <!-- Inline label editor — shown above selected sticky -->
+    @if (editingSticky(); as editing) {
+      <input
+        class="sticky-editor font-sans font-medium text-base bg-transparent border-none outline-none text-center w-36"
+        [value]="editing.label"
+        [attr.aria-label]="'Libellé du sticky ' + editing.type"
+        [style.left.px]="editingScreenX()"
+        [style.top.px]="editingScreenY()"
+        (input)="onLabelInput($event, editing.id)"
+        (blur)="onLabelBlur(editing.id, $event)"
+        (keydown.enter)="clearEditing()"
+        (keydown.escape)="clearEditing()"
+        #editorInput
+      />
+    }
+
     <!-- Titre éditable — haut-gauche -->
     <app-editable-title
-      [title]="workshopTitle()"
-      (titleChange)="workshopTitle.set($event)"
+      [title]="workshopStore.name()"
+      (titleChange)="workshopStore.rename($event)"
     />
 
-    <!-- Dock palette — bas-centre -->
-    <app-dock
+    <!-- Palette dock pédagogique — bas-centre -->
+    <app-palette-dock
       [collapsed]="dockCollapsed()"
       (toggleCollapsed)="dockCollapsed.set(!dockCollapsed())"
-    >
-      @for (item of dockItems; track item.type) {
-        <div class="flex flex-col items-center gap-1.5">
-          <div
-            class="relative transition-transform duration-150"
-            [class]="item.locked
-              ? 'opacity-40 cursor-not-allowed'
-              : 'cursor-pointer hover:scale-105'"
-          >
-            <app-sticky-card
-              [type]="item.type"
-              [label]="''"
-              [width]="48"
-              [height]="48"
-              [rotation]="0"
-            />
-            @if (item.locked) {
-              <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 text-text-primary">
-                  <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            }
-          </div>
-          <span class="text-[10px] font-medium text-text-secondary font-sans leading-none">
-            {{ item.label }}
-          </span>
-        </div>
-      }
-    </app-dock>
+    />
 
     <!-- Barre d'actions — bas-droite -->
     <app-action-bar>
@@ -191,25 +159,47 @@ const PREVIEW_STICKIES: PreviewSticky[] = [
     '.canvas-svg { position: absolute; inset: 0; width: 100%; height: 100%; }',
     '.cursor-grab { cursor: grab; }',
     '.cursor-grabbing { cursor: grabbing; }',
+    '.sticky-editor { position: fixed; z-index: 60; transform: translate(-50%, -50%); padding: 4px 8px; }',
   ],
 })
 export class CanvasComponent {
   protected readonly store = inject(CanvasStore);
+  protected readonly workshopStore = inject(WorkshopStore);
   private readonly fullscreen = inject(FullscreenService);
-  private readonly el = inject(ElementRef);
+  private readonly el = inject(ElementRef<HTMLElement>);
 
   protected readonly isSpaceHeld = signal(false);
   protected readonly isPanning = signal(false);
   protected readonly dockCollapsed = signal(false);
-  protected readonly workshopTitle = signal('Mon atelier DDD');
+  protected readonly selectedId = signal<string | null>(null);
+  protected readonly editingId = signal<string | null>(null);
 
-  protected readonly dockItems = DOCK_ITEMS;
-  protected readonly previewStickies = PREVIEW_STICKIES;
+  protected readonly stickies = this.workshopStore.stickies;
+
+  protected readonly editingSticky = computed<Sticky | null>(() => {
+    const id = this.editingId();
+    if (!id) return null;
+    return this.stickies().find((s) => s.id === id) ?? null;
+  });
+
+  protected readonly editingScreenX = computed(() => {
+    const s = this.editingSticky();
+    if (!s) return 0;
+    const { panX, zoom } = this.store.viewport();
+    const rect = this.el.nativeElement.getBoundingClientRect();
+    return s.x * zoom + panX + rect.left + (s.width * zoom) / 2;
+  });
+
+  protected readonly editingScreenY = computed(() => {
+    const s = this.editingSticky();
+    if (!s) return 0;
+    const { panY, zoom } = this.store.viewport();
+    const rect = this.el.nativeElement.getBoundingClientRect();
+    return s.y * zoom + panY + rect.top + (s.height * zoom) / 2;
+  });
 
   private lastMouseX = 0;
   private lastMouseY = 0;
-
-  protected readonly hostElement = computed(() => this.el.nativeElement as HTMLElement);
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent): void {
@@ -220,6 +210,11 @@ export class CanvasComponent {
     if (e.code === 'KeyF') void this.fullscreen.toggle();
     if (e.code === 'KeyD') this.dockCollapsed.set(!this.dockCollapsed());
     if (e.ctrlKey && e.code === 'KeyE') { e.preventDefault(); this.onExport(); }
+    if (e.code === 'Delete' || e.code === 'Backspace') {
+      const id = this.selectedId();
+      if (id) { this.workshopStore.removeSticky(id); this.selectedId.set(null); }
+    }
+    if (e.code === 'Escape') this.clearEditing();
   }
 
   @HostListener('document:keyup', ['$event'])
@@ -255,8 +250,46 @@ export class CanvasComponent {
   protected onWheel(e: WheelEvent): void {
     e.preventDefault();
     const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-    const rect = (this.el.nativeElement as HTMLElement).getBoundingClientRect();
+    const rect = this.el.nativeElement.getBoundingClientRect();
     this.store.zoom(factor, e.clientX - rect.left, e.clientY - rect.top);
+  }
+
+  protected onDrop(event: CdkDragDrop<StickyType[]>): void {
+    const type = event.item.data as StickyType;
+    const rect = this.el.nativeElement.getBoundingClientRect();
+    const { x, y } = screenToCanvas(
+      event.dropPoint.x, event.dropPoint.y,
+      rect.left, rect.top,
+      this.store.viewport(),
+    );
+    this.workshopStore.addSticky(type, x, y);
+    // Immediately enter edit mode on the newly created sticky
+    const newSticky = this.stickies()[this.stickies().length - 1];
+    if (newSticky) {
+      this.selectedId.set(newSticky.id);
+      this.editingId.set(newSticky.id);
+    }
+  }
+
+  protected onStickyClick(s: Sticky): void {
+    this.selectedId.set(s.id);
+    this.editingId.set(s.id);
+  }
+
+  protected onLabelInput(e: Event, id: string): void {
+    const value = (e.target as HTMLInputElement).value;
+    this.workshopStore.updateLabel(id, value);
+  }
+
+  protected onLabelBlur(id: string, e: FocusEvent): void {
+    const value = (e.target as HTMLInputElement).value;
+    this.workshopStore.updateLabel(id, value);
+    this.clearEditing();
+  }
+
+  protected clearEditing(): void {
+    this.editingId.set(null);
+    this.selectedId.set(null);
   }
 
   protected toggleFullscreen(): void {
@@ -264,7 +297,7 @@ export class CanvasComponent {
   }
 
   protected onExport(): void {
-    // Branché en étape 10
+    // Wired in étape 10
     console.log('Export Markdown — étape 10');
   }
 }
