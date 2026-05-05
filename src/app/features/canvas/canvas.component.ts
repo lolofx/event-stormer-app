@@ -39,7 +39,7 @@ import type { Sticky } from '../../domain/sticky';
       <app-background-grid [viewport]="store.viewport()" />
 
       <!-- SVG canvas: stickies follow pan/zoom transform -->
-      <svg class="canvas-svg" aria-label="Canvas Event Storming">
+      <svg class="canvas-svg" overflow="visible" aria-label="Canvas Event Storming">
         <!-- screenToCanvas() used at drag-end and on sticky mousedown — SVG scale trap, see coordinate-translator.ts -->
         <g [attr.transform]="store.svgTransform()">
           @for (s of stickies(); track s.id) {
@@ -242,7 +242,9 @@ export class CanvasComponent {
   }
 
   protected onPaletteDrop(event: { type: StickyType; screenX: number; screenY: number }): void {
-    const rect = this.el.nativeElement.getBoundingClientRect();
+    // canvas-host is position:fixed inset:0 — app-canvas itself is 0×0 (all children are fixed)
+    const canvasHost = this.el.nativeElement.querySelector('.canvas-host') as HTMLElement | null;
+    const rect = canvasHost ? canvasHost.getBoundingClientRect() : this.el.nativeElement.getBoundingClientRect();
     // Ignore if dropped outside canvas or on a UI overlay
     if (event.screenX < rect.left || event.screenX > rect.right ||
         event.screenY < rect.top || event.screenY > rect.bottom) return;

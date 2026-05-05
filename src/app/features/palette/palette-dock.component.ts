@@ -102,6 +102,8 @@ export class PaletteDockComponent {
   );
 
   protected onDragEnded(event: CdkDragEnd, type: StickyType): void {
+    // Reset position — CDK keeps the transform offset when there is no cdkDropList target
+    event.source.reset();
     // Ignore clicks (distance < 5px) — only emit for real drags
     if (Math.abs(event.distance.x) < 5 && Math.abs(event.distance.y) < 5) return;
     this.stickyDragEnded.emit({ type, screenX: event.dropPoint.x, screenY: event.dropPoint.y });
