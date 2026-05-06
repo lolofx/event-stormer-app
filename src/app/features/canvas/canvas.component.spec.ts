@@ -179,11 +179,27 @@ describe('CanvasComponent', () => {
       expect(component['selectedId']()).toBe('s1');
     });
 
-    it('should enter edit mode when mouseup follows without movement beyond 3px threshold', () => {
+    it('should select but NOT enter edit mode on short click', () => {
       const card = fixture.debugElement.query(By.css('app-sticky-card'));
       card.triggerEventHandler('mousedown', new MouseEvent('mousedown', { clientX: 100, clientY: 100 }));
       document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      expect(component['selectedId']()).toBe('s1');
+      expect(component['editingId']()).toBeNull();
+    });
+
+    it('should enter edit mode on dblclick', () => {
+      const card = fixture.debugElement.query(By.css('app-sticky-card'));
+      card.triggerEventHandler('dblclick', new MouseEvent('dblclick'));
       expect(component['editingId']()).toBe('s1');
+      expect(component['selectedId']()).toBe('s1');
+    });
+
+    it('should call removeSticky and clear selectedId when deleteRequest is emitted', () => {
+      component['selectedId'].set('s1');
+      const card = fixture.debugElement.query(By.css('app-sticky-card'));
+      card.triggerEventHandler('deleteRequest', undefined);
+      expect(removeSticky).toHaveBeenCalledWith('s1');
+      expect(component['selectedId']()).toBeNull();
     });
 
     it('should not enter edit mode when drag exceeds 3px threshold before mouseup', () => {

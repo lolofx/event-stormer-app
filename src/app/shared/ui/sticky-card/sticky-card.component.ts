@@ -15,7 +15,7 @@ export type { StickyColors } from '../../sticky-type-colors';
   template: `
     <div
       data-testid="sticky-card"
-      class="relative flex items-center justify-center p-3 select-none transition-[box-shadow,transform] duration-150"
+      class="relative flex items-center justify-center p-3 select-none transition-[box-shadow,transform] duration-150 group"
       [class]="shadowClass()"
       [class.border-dashed]="isBoundedContext()"
       [class.border-2]="isBoundedContext()"
@@ -31,6 +31,13 @@ export type { StickyColors } from '../../sticky-type-colors';
       [style.outline]="selected() ? '2px solid #0a0a0a' : 'none'"
       [style.outline-offset.px]="4"
     >
+      <button
+        data-testid="delete-btn"
+        class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gray-800/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs leading-none z-10"
+        aria-label="Supprimer"
+        (mousedown)="$event.stopPropagation()"
+        (click)="$event.stopPropagation(); deleteRequest.emit()"
+      >×</button>
       @if (isEditing()) {
         <textarea
           #editor
@@ -70,6 +77,7 @@ export class StickyCardComponent {
 
   readonly labelChange = output<string>();
   readonly editingDone = output<void>();
+  readonly deleteRequest = output<void>();
 
   private readonly editorRef = viewChild<ElementRef<HTMLTextAreaElement>>('editor');
 

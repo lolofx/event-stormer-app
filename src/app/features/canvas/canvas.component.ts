@@ -59,8 +59,10 @@ import type { Sticky } from '../../domain/sticky';
                 [isDragging]="draggingId() === s.id"
                 [showEmptyPlaceholder]="true"
                 (mousedown)="onStickyMouseDown($event, s)"
+                (dblclick)="onStickyDblClick(s.id)"
                 (labelChange)="workshopStore.updateLabel(s.id, $event)"
                 (editingDone)="clearEditing()"
+                (deleteRequest)="onDeleteSticky(s.id)"
               />
             </foreignObject>
           }
@@ -206,10 +208,6 @@ export class CanvasComponent {
   onMouseUp(): void {
     this.isPanning.set(false);
     if (this.stickyMove) {
-      if (!this.hasMoved) {
-        // Short click without move → enter edit mode
-        this.editingId.set(this.stickyMove.id);
-      }
       this.draggingId.set(null);
       this.stickyMove = null;
       this.hasMoved = false;
@@ -223,6 +221,16 @@ export class CanvasComponent {
       this.lastMouseX = e.clientX;
       this.lastMouseY = e.clientY;
     }
+  }
+
+  protected onStickyDblClick(id: string): void {
+    this.selectedId.set(id);
+    this.editingId.set(id);
+  }
+
+  protected onDeleteSticky(id: string): void {
+    this.workshopStore.removeSticky(id);
+    this.selectedId.set(null);
   }
 
   protected onStickyMouseDown(e: MouseEvent, s: Sticky): void {
