@@ -248,8 +248,16 @@ export class CanvasComponent {
     // Ignore if dropped outside canvas or on a UI overlay
     if (event.screenX < rect.left || event.screenX > rect.right ||
         event.screenY < rect.top || event.screenY > rect.bottom) return;
-    const target = document.elementFromPoint(event.screenX, event.screenY);
-    if (target?.closest('app-palette-dock') || target?.closest('app-action-bar') || target?.closest('app-editable-title')) return;
+    // Check UI overlay zones by bounds — not elementFromPoint, which would hit
+    // the dragged element itself now that overflow:visible lets it leave the dock
+    const inRect = (sel: string) => {
+      const el = document.querySelector(sel);
+      if (!el) return false;
+      const r = el.getBoundingClientRect();
+      return event.screenX >= r.left && event.screenX <= r.right &&
+             event.screenY >= r.top  && event.screenY <= r.bottom;
+    };
+    if (inRect('app-palette-dock') || inRect('app-action-bar') || inRect('app-editable-title')) return;
     const { x, y } = screenToCanvas(event.screenX, event.screenY, rect.left, rect.top, this.store.viewport());
     this.workshopStore.addSticky(event.type, x, y);
     const newSticky = this.stickies()[this.stickies().length - 1];

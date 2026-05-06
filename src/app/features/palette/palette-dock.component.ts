@@ -35,6 +35,9 @@ const DOCK_LABELS: Readonly<Record<StickyType, string>> = {
       to   { opacity: 1; transform: translateY(0)  scale(1); }
     }
     .item-enter { animation: fadeSlideIn 200ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+    /* CDK applique immédiatement un translate au démarrage du drag — désactiver la transition CSS
+       à ce moment évite le retard "lent au début puis rattrape la souris", conserver uniquement au repos. */
+    [cdkDrag]:not(.cdk-drag-dragging) { transition: transform 150ms cubic-bezier(0.2, 0.9, 0.3, 1); }
   `],
   template: `
     <app-dock [collapsed]="collapsed()" (toggleCollapsed)="toggleCollapsed.emit()">
@@ -53,7 +56,7 @@ const DOCK_LABELS: Readonly<Record<StickyType, string>> = {
               <div
                 cdkDrag
                 [cdkDragData]="item.type"
-                class="transition-transform duration-150 cursor-grab hover:scale-105 active:cursor-grabbing"
+                class="cursor-grab hover:scale-105 active:cursor-grabbing"
                 style="touch-action: none;"
                 (cdkDragEnded)="onDragEnded($event, item.type)"
               >

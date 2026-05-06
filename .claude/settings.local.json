@@ -4,15 +4,26 @@
       "Bash(rtk git *)",
       "Bash(rtk ls *)",
       "Bash(rtk npx *)",
-      "Bash(npx @angular/cli@latest version)",
-      "Bash(npx @angular/cli@latest new --help)",
-      "Bash(npx @angular/cli@21 new eventstormer --directory . --routing --style=scss --no-ssr --zoneless --skip-git --force)",
       "Bash(mv README.md.bak README.md)",
       "Bash(cat .gitignore.bak)",
       "Bash(rm .gitignore.bak)",
       "Bash(npx vitest *)",
       "Bash(npx ng *)",
-      "Bash(rtk npm *)"
+      "Bash(rtk npm *)",
+      "Bash(rtk find *)",
+      "Bash(rtk read *)",
+      "Bash(rtk grep *)",
+      "Bash(rtk gh *)",
+      "Bash(grep -v \"^$\")",
+      "mcp__chrome-debug__list_pages",
+      "mcp__chrome-debug__take_screenshot",
+      "mcp__chrome-debug__list_console_messages",
+      "mcp__chrome-debug__evaluate_script",
+      "mcp__chrome-debug__take_snapshot",
+      "mcp__chrome-debug__drag"
     ]
+  },
+  "enabledPlugins": {
+    "followrabbit@claude-plugins-official": true
   }
 }

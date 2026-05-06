@@ -15,6 +15,10 @@ import { Component, input, output } from '@angular/core';
     .dock-content-grid > div {
       overflow: hidden;
     }
+    /* During CDK drag, suppress clipping so the dragged item can leave the dock */
+    .dock-content-grid > div:has(.cdk-drag-dragging) {
+      overflow: visible;
+    }
   `],
   template: `
     <!-- Collapse handle — always visible, anchors the dock position -->
