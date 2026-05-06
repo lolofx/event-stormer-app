@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { StickyCardComponent, STICKY_COLORS } from './sticky-card.component';
+import { StickyCardComponent } from './sticky-card.component';
+import { STICKY_COLORS } from '../../sticky-type-colors';
 import { StickyType } from '../../../domain/sticky-type';
 
 describe('StickyCardComponent', () => {

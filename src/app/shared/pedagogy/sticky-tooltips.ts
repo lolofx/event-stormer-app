@@ -1,5 +1,5 @@
 import { StickyType } from '../../domain/sticky-type';
-import { STICKY_COLORS } from '../ui/sticky-card/sticky-card.component';
+import { STICKY_COLORS } from '../sticky-type-colors';
 
 export interface StickyTooltipData {
   readonly type: StickyType;

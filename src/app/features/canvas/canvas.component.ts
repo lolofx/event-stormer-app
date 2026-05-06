@@ -277,6 +277,6 @@ export class CanvasComponent {
   }
 
   protected onExport(): void {
-    console.log('Export Markdown — étape 10');
+    // TODO étape 10
   }
 }
