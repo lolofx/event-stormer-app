@@ -43,7 +43,7 @@ import { type Sticky, minStickyDimensions } from '../../domain/sticky';
       <svg class="canvas-svg" overflow="visible" aria-label="Canvas Event Storming">
         <!-- screenToCanvas() used at drag-end and on sticky mousedown — SVG scale trap, see coordinate-translator.ts -->
         <g [attr.transform]="store.svgTransform()">
-          @for (s of stickies(); track s.id) {
+          @for (s of sortedStickies(); track s.id) {
             <foreignObject
               [attr.x]="s.x"
               [attr.y]="s.y"
@@ -178,6 +178,15 @@ export class CanvasComponent {
   protected readonly draggingId = signal<string | null>(null);
 
   protected readonly stickies = this.workshopStore.stickies;
+
+  // BC stickies rendered first so they sit behind other stickies in SVG painter order
+  protected readonly sortedStickies = computed(() => {
+    const all = this.stickies();
+    return [
+      ...all.filter((s) => s.type === StickyType.BoundedContext),
+      ...all.filter((s) => s.type !== StickyType.BoundedContext),
+    ];
+  });
 
   // Handle size stays constant in screen pixels regardless of zoom (8px)
   protected readonly handleHalf = computed(() => 4 / this.store.viewport().zoom);
