@@ -33,17 +33,19 @@ rtk npm run lint
 
 ## État du projet
 
-| Étape | Statut |
-|---|---|
-| Angular 21 init | ✅ mergé |
-| Tailwind + tokens + Geist | ✅ mergé |
-| Angular Material minimal | ✅ mergé |
-| Domain layer TDD (RM01-RM16) | ✅ mergé |
-| CI GitHub Actions | ✅ actif |
-| Dexie persistence | ⏳ à venir |
-| Canvas SVG + pan/zoom | ⏳ à venir |
-| UI components + dock | ⏳ à venir |
-| Azure Static Web Apps | ⏳ après canvas |
+| # | Étape | État |
+|---|---|---|
+| 1–3 | Angular 21 + Tailwind + Material minimal | ✅ mergé |
+| 4 | Domain layer TDD (RM01–RM16) | ✅ mergé |
+| 4b | CI GitHub Actions | ✅ actif |
+| 5 | Persistance Dexie + fallback InMemory | ✅ mergé |
+| 6 | Canvas SVG + pan/zoom + fullscreen | ✅ mergé |
+| 7 | Composants UI custom (sticky, dock, action-bar…) | ✅ mergé |
+| 8 | Palette dock pédagogique + WorkshopStore | ⏳ PR #11 |
+| 9 | Progression des niveaux | ⬜ à venir |
+| 10 | Export Markdown + Mermaid | ⬜ à venir |
+| 11 | Garde-fou nouveau workshop + import JSON | ⬜ à venir |
+| 12 | Azure Static Web Apps + Lighthouse CI | ⬜ à venir |
 
 ## Documentation
 

@@ -258,7 +258,7 @@ export class CanvasComponent {
         event.screenY < rect.top || event.screenY > rect.bottom) return;
     // Check UI overlay zones by bounds — not elementFromPoint, which would hit
     // the dragged element itself now that overflow:visible lets it leave the dock
-    const inRect = (sel: string) => {
+    const inRect = (sel: string): boolean => {
       const el = document.querySelector(sel);
       if (!el) return false;
       const r = el.getBoundingClientRect();
