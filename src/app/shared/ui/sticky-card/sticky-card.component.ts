@@ -15,7 +15,11 @@ export type { StickyColors } from '../../sticky-type-colors';
   template: `
     <div
       data-testid="sticky-card"
-      class="relative flex items-center justify-center p-3 select-none transition-[box-shadow,transform] duration-150 group"
+      class="relative flex p-3 select-none transition-[box-shadow,transform] duration-150 group"
+      [class.items-center]="!isBoundedContext()"
+      [class.justify-center]="!isBoundedContext()"
+      [class.items-start]="isBoundedContext()"
+      [class.justify-start]="isBoundedContext()"
       [class]="shadowClass()"
       [class.border-dashed]="isBoundedContext()"
       [class.border-2]="isBoundedContext()"

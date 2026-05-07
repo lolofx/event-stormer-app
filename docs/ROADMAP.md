@@ -12,7 +12,7 @@
 | 7 | Composants UI custom | #10 | ✅ |
 | 8 | Palette dock pédagogique + WorkshopStore | #11 | ✅ |
 | 9 | Progression des niveaux | #12 | ✅ |
-| 9b | Resize interactif des stickies | — | ⬜ |
+| 9b | Resize interactif des stickies + démo | — | ✅ |
 | 10 | Export Markdown + Mermaid | — | ⬜ |
 | 11 | Garde-fou nouveau workshop + import JSON | — | ⬜ |
 | 12 | Azure SWA + Lighthouse CI | — | ⬜ |
@@ -27,23 +27,29 @@
 - Pulse discret au déblocage, état persisté (RM13–RM15)
 - ADR `0005-progressive-level-unlock.md`
 
-## Étape 9b — Resize interactif des stickies
+## Étape 9b — Resize interactif des stickies ✅
 
-Tous les stickies seront redimensionnables. Le BoundedContext en est le cas prioritaire (sinon la détection géométrique à l'export est inutilisable).
+Tous les stickies sont redimensionnables. Le BoundedContext en est le cas prioritaire (détection géométrique à l'export).
 
-**Approche générique** : poignées de resize sur les 4 coins et 4 bords, drag natif SVG (pas de CDK — le canvas est SVG).
+**Implémentation réelle** : 4 poignées SVG `<rect>` aux coins, directement dans `canvas.component.ts` (pas de composant séparé). Taille constante 8 px écran via `vector-effect="non-scaling-stroke"` + compensation zoom (`4 / viewport.zoom`).
 
-`features/canvas/` :
+`features/canvas/canvas.component.ts` :
+- Poignées rendues pour le sticky sélectionné (hors mode édition), `nw/ne/se/sw`
+- `onResizeStart` → `doResize` : Δ calculé en coordonnées canvas depuis les valeurs figées au mousedown ; ancre opposée fixe pour chaque coin
+- `WorkshopStore.resizeSticky(id, x, y, width, height)` — inclut la position car NW/NE/SW déplacent l'origine
 
-- `resize-handle.component.ts` : 8 poignées SVG `<rect>` invisibles (hitbox) + visible au hover/select
-- `canvas.component.ts` : détecter `mousedown` sur poignée → `mousemove` → `mouseup` pour calculer `Δwidth`/`Δheight` en coordonnées canvas
-- `WorkshopStore.resizeSticky(id, width, height)` → `domain/workshop.ts` `resizeSticky()`
-- Contrainte : taille minimum 80×60 px pour tous types ; BoundedContext min 200×140 px
-- Rotation préservée (RM16) — le resize ne doit pas recalculer la rotation
-- Persistance : RM08 (debounce 500 ms)
-- Tests : spec domain `resizeSticky`, spec store, spec canvas (resize events)
+`domain/sticky.ts` : constantes `STICKY_MIN_WIDTH=80`, `STICKY_MIN_HEIGHT=60`, `BC_MIN_WIDTH=200`, `BC_MIN_HEIGHT=140` + helper `minStickyDimensions(type)`
 
-**Note** : `BC_DEFAULT_WIDTH = 400 / BC_DEFAULT_HEIGHT = 280` — taille par défaut déjà fixée à la création pour que la détection géométrique fonctionne avant implémentation du resize.
+`domain/workshop.ts` : `resizeSticky()` enforce les minima par type, préserve rotation (RM16)
+
+**Comportements spécifiques BoundedContext** :
+- Rotation fixée à 0° à la création (conteneur droit, RM16)
+- Label aligné en haut à gauche (ne gêne pas les stickies intérieurs)
+- Rendu en premier dans le groupe SVG (peintre model) → les autres stickies passent par-dessus et restent interactifs
+
+**Note** : `BC_DEFAULT_WIDTH = 400 / BC_DEFAULT_HEIGHT = 280` — fix du `foreignObject` hardcodé 200×160 → dimensions réelles ; BC s'affiche maintenant à sa vraie taille dès la création.
+
+**Bouton démo** (`domain/demo.ts`) : charge un scénario "Livraison de pizza" complet (3 BC × tous les types de stickies, niveaux Process + Design débloqués) si et seulement si le canvas est vide. Bouton ✨ dans la barre d'actions, disparaît dès le premier sticky posé.
 
 ## Étape 10 — Export Markdown + Mermaid
 
@@ -80,11 +86,9 @@ Tous les stickies seront redimensionnables. Le BoundedContext en est le cas prio
 | 0005 | progressive-level-unlock | 9 |
 | 0006 | visual-direction-figma-like | 2 |
 
-## Pièges actifs (étapes 9b–12)
+## Pièges actifs (étapes 10–12)
 
 - **Mermaid déterministe** : tri stable X → Y → id, sanitiser labels (parenthèses, guillemets, retours ligne)
 - **BoundedContext géométrique** : O(n²) ok ≤ 150 stickies — commenter l'algo de détection
 - **API Fullscreen** : interaction utilisateur explicite requise, fallback si refusée
-- **Rotation non persistée** : RM16 — stocker à la création, jamais recalculer
-- **Resize SVG** : coordonnées canvas (tenir compte du zoom/pan), pas de coordonnées écran brutes
-- **Resize + rotation** : un sticky rotaté a son système de coordonnées local — le resize doit opérer dans l'espace non-rotaté puis réappliquer la rotation
+- **Rotation non persistée** : RM16 — stocker à la création, jamais recalculer (BC = toujours 0°)

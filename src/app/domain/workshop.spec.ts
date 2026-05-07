@@ -1,5 +1,5 @@
 import { Level } from './level';
-import { createSticky } from './sticky';
+import { BC_MIN_HEIGHT, BC_MIN_WIDTH, STICKY_MIN_HEIGHT, STICKY_MIN_WIDTH, createSticky } from './sticky';
 import { StickyType } from './sticky-type';
 import {
   addSticky,
@@ -7,6 +7,7 @@ import {
   moveSticky,
   removeSticky,
   renameWorkshop,
+  resizeSticky,
   setActiveLevel,
   unlockDesignLevel,
   unlockProcessLevel,
@@ -215,6 +216,70 @@ describe('Workshop', () => {
     it('should update the workshop name', () => {
       const w = renameWorkshop(createWorkshop('Ancien'), 'Nouveau');
       expect(w.name).toBe('Nouveau');
+    });
+  });
+
+  describe('resizeSticky', () => {
+    it('should update width and height of a sticky', () => {
+      const sticky = createSticky(StickyType.DomainEvent, 0, 0);
+      const w = addSticky(createWorkshop('Test'), sticky);
+      const updated = resizeSticky(w, sticky.id, 0, 0, 200, 180);
+      expect(updated.stickies[0]?.width).toBe(200);
+      expect(updated.stickies[0]?.height).toBe(180);
+    });
+
+    it('should update position when resizing from anchored corner', () => {
+      const sticky = createSticky(StickyType.DomainEvent, 100, 100);
+      const w = addSticky(createWorkshop('Test'), sticky);
+      const updated = resizeSticky(w, sticky.id, 80, 70, 180, 150);
+      expect(updated.stickies[0]?.x).toBe(80);
+      expect(updated.stickies[0]?.y).toBe(70);
+    });
+
+    it('should enforce minimum size for regular stickies', () => {
+      const sticky = createSticky(StickyType.DomainEvent, 0, 0);
+      const w = addSticky(createWorkshop('Test'), sticky);
+      const updated = resizeSticky(w, sticky.id, 0, 0, 10, 10);
+      expect(updated.stickies[0]?.width).toBe(STICKY_MIN_WIDTH);
+      expect(updated.stickies[0]?.height).toBe(STICKY_MIN_HEIGHT);
+    });
+
+    it('should enforce minimum size for BoundedContext (RM06)', () => {
+      const sticky = createSticky(StickyType.BoundedContext, 0, 0);
+      const w = addSticky(createWorkshop('Test'), sticky);
+      const updated = resizeSticky(w, sticky.id, 0, 0, 50, 50);
+      expect(updated.stickies[0]?.width).toBe(BC_MIN_WIDTH);
+      expect(updated.stickies[0]?.height).toBe(BC_MIN_HEIGHT);
+    });
+
+    it('should preserve rotation when resizing (RM16)', () => {
+      const sticky = createSticky(StickyType.DomainEvent, 0, 0, { rotation: 1.5 });
+      const w = addSticky(createWorkshop('Test'), sticky);
+      const updated = resizeSticky(w, sticky.id, 0, 0, 200, 180);
+      expect(updated.stickies[0]?.rotation).toBe(1.5);
+    });
+
+    it('should not affect other stickies when resizing one', () => {
+      const s1 = createSticky(StickyType.DomainEvent, 0, 0);
+      const s2 = createSticky(StickyType.Command, 200, 200);
+      const w = addSticky(addSticky(createWorkshop('Test'), s1), s2);
+      const updated = resizeSticky(w, s1.id, 0, 0, 200, 180);
+      expect(updated.stickies[1]?.width).toBe(160);
+      expect(updated.stickies[1]?.height).toBe(120);
+    });
+
+    it('should update updatedAt on resize (RM08)', () => {
+      const sticky = createSticky(StickyType.DomainEvent, 0, 0);
+      const w = addSticky(createWorkshop('Test'), sticky);
+      const updated = resizeSticky(w, sticky.id, 0, 0, 200, 180);
+      expect(updated.updatedAt >= w.updatedAt).toBe(true);
+    });
+
+    it('should be a no-op for unknown ids', () => {
+      const sticky = createSticky(StickyType.DomainEvent, 0, 0);
+      const w = addSticky(createWorkshop('Test'), sticky);
+      const updated = resizeSticky(w, 'non-existent', 0, 0, 200, 180);
+      expect(updated.stickies[0]?.width).toBe(sticky.width);
     });
   });
 });

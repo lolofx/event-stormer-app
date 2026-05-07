@@ -6,7 +6,7 @@ import {
   unlockDesign,
   unlockProcess,
 } from './level-unlock-state';
-import { Sticky } from './sticky';
+import { Sticky, minStickyDimensions } from './sticky';
 import { Viewport, createViewport } from './viewport';
 
 export const WORKSHOP_SCHEMA_VERSION = 1;
@@ -63,6 +63,26 @@ export function moveSticky(workshop: Workshop, stickyId: string, x: number, y: n
   return {
     ...workshop,
     stickies: workshop.stickies.map((s) => (s.id === stickyId ? { ...s, x, y } : s)),
+    updatedAt: new Date(),
+  };
+}
+
+/** Resizes a sticky, enforcing minimum dimensions per type. Rotation is preserved (RM16). */
+export function resizeSticky(
+  workshop: Workshop,
+  stickyId: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+): Workshop {
+  return {
+    ...workshop,
+    stickies: workshop.stickies.map((s) => {
+      if (s.id !== stickyId) return s;
+      const min = minStickyDimensions(s.type);
+      return { ...s, x, y, width: Math.max(min.width, width), height: Math.max(min.height, height) };
+    }),
     updatedAt: new Date(),
   };
 }
