@@ -14,6 +14,9 @@ export interface Sticky {
 
 export const STICKY_DEFAULT_WIDTH = 160;
 export const STICKY_DEFAULT_HEIGHT = 120;
+/** BoundedContext must be large enough to visually contain other stickies (RM06). */
+export const BC_DEFAULT_WIDTH = 400;
+export const BC_DEFAULT_HEIGHT = 280;
 const ROTATION_RANGE = 2;
 
 export interface CreateStickyOptions {
@@ -26,7 +29,7 @@ export interface CreateStickyOptions {
 
 /**
  * Creates a new sticky at (x, y) with a random rotation fixed for its lifetime (RM16).
- * Label defaults to empty string — placeholder shown in UI (RM05).
+ * BoundedContext gets larger defaults so it can visually contain other stickies (RM06).
  */
 export function createSticky(
   type: StickyType,
@@ -34,14 +37,16 @@ export function createSticky(
   y: number,
   options: CreateStickyOptions = {}
 ): Sticky {
+  const defaultWidth = type === StickyType.BoundedContext ? BC_DEFAULT_WIDTH : STICKY_DEFAULT_WIDTH;
+  const defaultHeight = type === StickyType.BoundedContext ? BC_DEFAULT_HEIGHT : STICKY_DEFAULT_HEIGHT;
   return {
     id: crypto.randomUUID(),
     type,
     label: options.label ?? '',
     x,
     y,
-    width: options.width ?? STICKY_DEFAULT_WIDTH,
-    height: options.height ?? STICKY_DEFAULT_HEIGHT,
+    width: options.width ?? defaultWidth,
+    height: options.height ?? defaultHeight,
     rotation: options.rotation ?? (Math.random() * 2 - 1) * ROTATION_RANGE,
   };
 }

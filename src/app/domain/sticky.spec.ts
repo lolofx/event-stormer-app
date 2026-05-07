@@ -1,5 +1,5 @@
 import { StickyType } from './sticky-type';
-import { createSticky, STICKY_DEFAULT_HEIGHT, STICKY_DEFAULT_WIDTH } from './sticky';
+import { createSticky, STICKY_DEFAULT_HEIGHT, STICKY_DEFAULT_WIDTH, BC_DEFAULT_WIDTH, BC_DEFAULT_HEIGHT } from './sticky';
 
 describe('Sticky', () => {
   describe('createSticky', () => {
@@ -23,10 +23,24 @@ describe('Sticky', () => {
       expect(a.id.length).toBeGreaterThan(0);
     });
 
-    it('should apply default dimensions', () => {
+    it('should apply default dimensions for regular stickies', () => {
       const sticky = createSticky(StickyType.Policy, 0, 0);
       expect(sticky.width).toBe(STICKY_DEFAULT_WIDTH);
       expect(sticky.height).toBe(STICKY_DEFAULT_HEIGHT);
+    });
+
+    it('should create BoundedContext with larger default dimensions to contain other stickies', () => {
+      const bc = createSticky(StickyType.BoundedContext, 0, 0);
+      expect(bc.width).toBe(BC_DEFAULT_WIDTH);
+      expect(bc.height).toBe(BC_DEFAULT_HEIGHT);
+      expect(bc.width).toBeGreaterThan(STICKY_DEFAULT_WIDTH * 2);
+      expect(bc.height).toBeGreaterThan(STICKY_DEFAULT_HEIGHT * 2);
+    });
+
+    it('should allow overriding BoundedContext dimensions via options', () => {
+      const bc = createSticky(StickyType.BoundedContext, 0, 0, { width: 600, height: 400 });
+      expect(bc.width).toBe(600);
+      expect(bc.height).toBe(400);
     });
 
     it('should assign a rotation within ±2° at creation (RM16)', () => {

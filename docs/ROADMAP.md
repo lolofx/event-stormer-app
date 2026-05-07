@@ -10,8 +10,9 @@
 | 5 | Persistance Dexie + fallback | #8 | ✅ |
 | 6 | Canvas SVG + pan/zoom + fullscreen | #9 | ✅ |
 | 7 | Composants UI custom | #10 | ✅ |
-| 8 | Palette dock pédagogique + WorkshopStore | #11 | ⏳ PR ouverte |
-| 9 | Progression des niveaux | — | ⬜ |
+| 8 | Palette dock pédagogique + WorkshopStore | #11 | ✅ |
+| 9 | Progression des niveaux | #12 | ✅ |
+| 9b | Resize interactif des stickies | — | ⬜ |
 | 10 | Export Markdown + Mermaid | — | ⬜ |
 | 11 | Garde-fou nouveau workshop + import JSON | — | ⬜ |
 | 12 | Azure SWA + Lighthouse CI | — | ⬜ |
@@ -25,6 +26,24 @@
 - `segmented-control` pour bascule entre niveaux débloqués
 - Pulse discret au déblocage, état persisté (RM13–RM15)
 - ADR `0005-progressive-level-unlock.md`
+
+## Étape 9b — Resize interactif des stickies
+
+Tous les stickies seront redimensionnables. Le BoundedContext en est le cas prioritaire (sinon la détection géométrique à l'export est inutilisable).
+
+**Approche générique** : poignées de resize sur les 4 coins et 4 bords, drag natif SVG (pas de CDK — le canvas est SVG).
+
+`features/canvas/` :
+
+- `resize-handle.component.ts` : 8 poignées SVG `<rect>` invisibles (hitbox) + visible au hover/select
+- `canvas.component.ts` : détecter `mousedown` sur poignée → `mousemove` → `mouseup` pour calculer `Δwidth`/`Δheight` en coordonnées canvas
+- `WorkshopStore.resizeSticky(id, width, height)` → `domain/workshop.ts` `resizeSticky()`
+- Contrainte : taille minimum 80×60 px pour tous types ; BoundedContext min 200×140 px
+- Rotation préservée (RM16) — le resize ne doit pas recalculer la rotation
+- Persistance : RM08 (debounce 500 ms)
+- Tests : spec domain `resizeSticky`, spec store, spec canvas (resize events)
+
+**Note** : `BC_DEFAULT_WIDTH = 400 / BC_DEFAULT_HEIGHT = 280` — taille par défaut déjà fixée à la création pour que la détection géométrique fonctionne avant implémentation du resize.
 
 ## Étape 10 — Export Markdown + Mermaid
 
@@ -61,9 +80,11 @@
 | 0005 | progressive-level-unlock | 9 |
 | 0006 | visual-direction-figma-like | 2 |
 
-## Pièges actifs (étapes 9–12)
+## Pièges actifs (étapes 9b–12)
 
 - **Mermaid déterministe** : tri stable X → Y → id, sanitiser labels (parenthèses, guillemets, retours ligne)
 - **BoundedContext géométrique** : O(n²) ok ≤ 150 stickies — commenter l'algo de détection
 - **API Fullscreen** : interaction utilisateur explicite requise, fallback si refusée
 - **Rotation non persistée** : RM16 — stocker à la création, jamais recalculer
+- **Resize SVG** : coordonnées canvas (tenir compte du zoom/pan), pas de coordonnées écran brutes
+- **Resize + rotation** : un sticky rotaté a son système de coordonnées local — le resize doit opérer dans l'espace non-rotaté puis réappliquer la rotation
