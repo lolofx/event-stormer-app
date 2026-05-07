@@ -31,13 +31,15 @@ export type { StickyColors } from '../../sticky-type-colors';
       [style.outline]="selected() ? '2px solid #0a0a0a' : 'none'"
       [style.outline-offset.px]="4"
     >
-      <button
-        data-testid="delete-btn"
-        class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gray-800/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs leading-none z-10"
-        aria-label="Supprimer"
-        (mousedown)="$event.stopPropagation()"
-        (click)="$event.stopPropagation(); deleteRequest.emit()"
-      >×</button>
+      @if (showDeleteButton()) {
+        <button
+          data-testid="delete-btn"
+          class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-gray-800/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs leading-none z-10"
+          aria-label="Supprimer"
+          (mousedown)="$event.stopPropagation()"
+          (click)="$event.stopPropagation(); deleteRequest.emit()"
+        >×</button>
+      }
       @if (isEditing()) {
         <textarea
           #editor
@@ -72,6 +74,7 @@ export class StickyCardComponent {
   isDragging = input<boolean>(false);
   isEditing = input<boolean>(false);
   showEmptyPlaceholder = input<boolean>(false);
+  showDeleteButton = input<boolean>(true);
   width = input<number>(160);
   height = input<number>(120);
 

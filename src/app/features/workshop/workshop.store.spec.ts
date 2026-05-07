@@ -4,6 +4,7 @@ import { vi, describe, it, beforeEach, afterEach, expect } from 'vitest';
 import { WorkshopStore } from './workshop.store';
 import { WorkshopPersistenceService } from '../../core/persistence';
 import { StickyType } from '../../domain/sticky-type';
+import { Level } from '../../domain/level';
 import type { WorkshopRepository } from '../../core/persistence';
 
 function makeRepo(): WorkshopRepository & {
@@ -132,6 +133,49 @@ describe('WorkshopStore', () => {
     it('should keep default workshop when persistence returns null', async () => {
       await store.initialize();
       expect(store.stickies().length).toBe(0);
+    });
+  });
+
+  describe('unlockProcess (RM13)', () => {
+    it('should set processUnlocked to true and switch to ProcessLevel', () => {
+      store.unlockProcess();
+      expect(store.levelUnlockState().processUnlocked).toBe(true);
+      expect(store.activeLevel()).toBe(Level.ProcessLevel);
+    });
+
+    it('should schedule a save', () => {
+      vi.useFakeTimers();
+      store.unlockProcess();
+      vi.advanceTimersByTime(500);
+      expect(repo.save).toHaveBeenCalledTimes(1);
+      vi.useRealTimers();
+    });
+  });
+
+  describe('unlockDesign (RM13)', () => {
+    it('should set designUnlocked to true and switch to DesignLevel when process is unlocked', () => {
+      store.unlockProcess();
+      store.unlockDesign();
+      expect(store.levelUnlockState().designUnlocked).toBe(true);
+      expect(store.activeLevel()).toBe(Level.DesignLevel);
+    });
+
+    it('should throw when process is not unlocked', () => {
+      expect(() => store.unlockDesign()).toThrow();
+    });
+  });
+
+  describe('setActiveLevel (RM14)', () => {
+    it('should switch to ProcessLevel when unlocked', () => {
+      store.unlockProcess();
+      store.setActiveLevel(Level.BigPicture);
+      expect(store.activeLevel()).toBe(Level.BigPicture);
+      store.setActiveLevel(Level.ProcessLevel);
+      expect(store.activeLevel()).toBe(Level.ProcessLevel);
+    });
+
+    it('should throw when switching to a locked level', () => {
+      expect(() => store.setActiveLevel(Level.ProcessLevel)).toThrow();
     });
   });
 

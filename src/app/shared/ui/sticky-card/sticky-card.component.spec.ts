@@ -12,6 +12,7 @@ describe('StickyCardComponent', () => {
     rotation: number;
     selected: boolean;
     isDragging: boolean;
+    showDeleteButton: boolean;
   }> = {}): HTMLElement {
     fixture = TestBed.createComponent(StickyCardComponent);
     fixture.componentRef.setInput('type', inputs.type ?? StickyType.DomainEvent);
@@ -19,6 +20,7 @@ describe('StickyCardComponent', () => {
     if (inputs.rotation !== undefined) fixture.componentRef.setInput('rotation', inputs.rotation);
     if (inputs.selected !== undefined) fixture.componentRef.setInput('selected', inputs.selected);
     if (inputs.isDragging !== undefined) fixture.componentRef.setInput('isDragging', inputs.isDragging);
+    if (inputs.showDeleteButton !== undefined) fixture.componentRef.setInput('showDeleteButton', inputs.showDeleteButton);
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }
@@ -80,10 +82,16 @@ describe('StickyCardComponent', () => {
     expect(card.style.outline).toBe('none');
   });
 
-  it('should render a delete button', () => {
+  it('should render a delete button by default', () => {
     const el = create();
     const btn = el.querySelector('[data-testid="delete-btn"]');
     expect(btn).not.toBeNull();
+  });
+
+  it('should not render delete button when showDeleteButton is false', () => {
+    const el = create({ showDeleteButton: false });
+    const btn = el.querySelector('[data-testid="delete-btn"]');
+    expect(btn).toBeNull();
   });
 
   it('should emit deleteRequest when delete button is clicked', () => {
