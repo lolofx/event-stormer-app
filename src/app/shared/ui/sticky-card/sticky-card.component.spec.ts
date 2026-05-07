@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { StickyCardComponent, STICKY_COLORS } from './sticky-card.component';
+import { StickyCardComponent } from './sticky-card.component';
+import { STICKY_COLORS } from '../../sticky-type-colors';
 import { StickyType } from '../../../domain/sticky-type';
 
 describe('StickyCardComponent', () => {
@@ -30,12 +31,24 @@ describe('StickyCardComponent', () => {
 
   it('should display label when provided', () => {
     const el = create({ label: 'Commande passée' });
-    expect(el.textContent?.trim()).toBe('Commande passée');
+    const span = el.querySelector('[data-testid="sticky-card"] span') as HTMLElement;
+    expect(span?.textContent?.trim()).toBe('Commande passée');
   });
 
-  it('should display empty string when label is empty', () => {
+  it('should display nothing when label is empty and showEmptyPlaceholder is false', () => {
     const el = create({ label: '' });
-    expect(el.textContent?.trim()).toBe('');
+    const span = el.querySelector('[data-testid="sticky-card"] span') as HTMLElement;
+    expect(span?.textContent?.trim()).toBe('');
+  });
+
+  it('should display placeholder when label is empty and showEmptyPlaceholder is true', () => {
+    const fixture = TestBed.createComponent(StickyCardComponent);
+    fixture.componentRef.setInput('type', StickyType.DomainEvent);
+    fixture.componentRef.setInput('label', '');
+    fixture.componentRef.setInput('showEmptyPlaceholder', true);
+    fixture.detectChanges();
+    const span = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="sticky-card"] span') as HTMLElement;
+    expect(span?.textContent?.trim()).toBe('sans libellé');
   });
 
   it('should apply rotation transform', () => {
@@ -65,6 +78,21 @@ describe('StickyCardComponent', () => {
     const el = create({ selected: false });
     const card = el.querySelector('[data-testid="sticky-card"]') as HTMLElement;
     expect(card.style.outline).toBe('none');
+  });
+
+  it('should render a delete button', () => {
+    const el = create();
+    const btn = el.querySelector('[data-testid="delete-btn"]');
+    expect(btn).not.toBeNull();
+  });
+
+  it('should emit deleteRequest when delete button is clicked', () => {
+    const el = create();
+    const emitted: void[] = [];
+    fixture.componentInstance.deleteRequest.subscribe(() => emitted.push(undefined));
+    const btn = el.querySelector('[data-testid="delete-btn"]') as HTMLElement;
+    btn.click();
+    expect(emitted).toHaveLength(1);
   });
 
   it('should define colors for all sticky types', () => {

@@ -1,0 +1,114 @@
+import { Component, computed, inject, input, output } from '@angular/core';
+import { CdkDrag, CdkDragPreview, CdkDragEnd } from '@angular/cdk/drag-drop';
+import { DockComponent } from '../../shared/ui/dock/dock.component';
+import { StickyCardComponent } from '../../shared/ui/sticky-card/sticky-card.component';
+import { PedagogyTooltipDirective } from '../../shared/ui/pedagogy-tooltip/pedagogy-tooltip.directive';
+import { WorkshopStore } from '../workshop/workshop.store';
+import { StickyType } from '../../domain/sticky-type';
+import { availableTypes } from '../../domain/level-unlock-state';
+import { STICKY_TOOLTIPS } from '../../shared/pedagogy/sticky-tooltips';
+
+const DOCK_LABELS: Readonly<Record<StickyType, string>> = {
+  [StickyType.DomainEvent]: 'Event',
+  [StickyType.Command]: 'Command',
+  [StickyType.Actor]: 'Actor',
+  [StickyType.Policy]: 'Policy',
+  [StickyType.ExternalSystem]: 'External',
+  [StickyType.Aggregate]: 'Aggregate',
+  [StickyType.ReadModel]: 'Read Model',
+  [StickyType.BoundedContext]: 'Context',
+};
+
+@Component({
+  selector: 'app-palette-dock',
+  standalone: true,
+  imports: [
+    DockComponent,
+    StickyCardComponent,
+    PedagogyTooltipDirective,
+    CdkDrag,
+    CdkDragPreview,
+  ],
+  styles: [`
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(6px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0)  scale(1); }
+    }
+    .item-enter { animation: fadeSlideIn 200ms cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+    /* CDK applique immédiatement un translate au démarrage du drag — désactiver la transition CSS
+       à ce moment évite le retard "lent au début puis rattrape la souris", conserver uniquement au repos. */
+    [cdkDrag]:not(.cdk-drag-dragging) { transition: transform 150ms cubic-bezier(0.2, 0.9, 0.3, 1); }
+  `],
+  template: `
+    <app-dock [collapsed]="collapsed()" (toggleCollapsed)="toggleCollapsed.emit()">
+      <div class="flex items-center gap-3">
+        @for (item of dockItems(); track item.type) {
+          <div
+            data-testid="palette-item"
+            class="flex flex-col items-center gap-1.5 item-enter"
+          >
+            <div
+              class="relative"
+              [appPedagogyTooltip]="tooltips[item.type]"
+              [tabindex]="0"
+              [attr.aria-label]="tooltips[item.type].label"
+            >
+              <div
+                cdkDrag
+                [cdkDragData]="item.type"
+                class="cursor-grab hover:scale-105 active:cursor-grabbing"
+                style="touch-action: none;"
+                (cdkDragEnded)="onDragEnded($event, item.type)"
+              >
+                <app-sticky-card
+                  [type]="item.type"
+                  [label]="''"
+                  [width]="48"
+                  [height]="48"
+                  [rotation]="0"
+                />
+                <ng-template cdkDragPreview>
+                  <app-sticky-card
+                    [type]="item.type"
+                    [label]="''"
+                    [width]="160"
+                    [height]="120"
+                    [rotation]="0"
+                  />
+                </ng-template>
+              </div>
+            </div>
+            <span
+              data-testid="palette-item-label"
+              class="text-[10px] font-medium font-sans leading-none text-text-secondary"
+            >
+              {{ labels[item.type] }}
+            </span>
+          </div>
+        }
+      </div>
+    </app-dock>
+  `,
+})
+export class PaletteDockComponent {
+  collapsed = input<boolean>(false);
+  toggleCollapsed = output<void>();
+  readonly stickyDragEnded = output<{ type: StickyType; screenX: number; screenY: number }>();
+
+  private readonly workshopStore = inject(WorkshopStore);
+
+  protected readonly tooltips = STICKY_TOOLTIPS;
+  protected readonly labels = DOCK_LABELS;
+
+  protected readonly dockItems = computed(() =>
+    availableTypes(this.workshopStore.levelUnlockState()).map((type) => ({ type }))
+  );
+
+  protected onDragEnded(event: CdkDragEnd, type: StickyType): void {
+    // Reset position — CDK keeps the transform offset when there is no cdkDropList target
+    event.source.reset();
+    // Ignore clicks (distance < 5px) — only emit for real drags
+    if (Math.abs(event.distance.x) < 5 && Math.abs(event.distance.y) < 5) return;
+    this.stickyDragEnded.emit({ type, screenX: event.dropPoint.x, screenY: event.dropPoint.y });
+  }
+}

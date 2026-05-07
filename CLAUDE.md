@@ -3,7 +3,7 @@
 Outil web de projection pour animateur DDD pilotant un atelier Event Storming.
 Angular 21 zoneless, 100 % frontend, déployé sur Azure Static Web Apps.
 
-**Contexte complet** : @docs/SPEC.md (spec fonctionnelle) — @docs/BOOTSTRAP.md (plan bootstrap)
+**Contexte complet** : @docs/SPEC.md (spec fonctionnelle) — @docs/ROADMAP.md (étapes restantes 9–12)
 
 ## Environnement
 
@@ -104,7 +104,7 @@ rtk npm run lint && rtk npm test && rtk npm run build:prod              # pré-c
 
 ## Workflow
 
-1. Nouvelle fonctionnalité = branche `feat/<nom>`, PR avec CI verte avant merge (merge = toi).
+1. Nouvelle fonctionnalité = branche `feat/<nom>`, PR avec CI verte avant merge (squash merge, merge = toi).
 2. Domain : spec Vitest d'abord, voir échouer, implémenter, refactorer.
 3. Composant UI : skill `frontend-design` → Context7 pour APIs Angular → implémentation.
 4. Export Mermaid : valider via MCP Mermaid Chart avant commit.

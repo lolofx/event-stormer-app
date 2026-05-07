@@ -3,6 +3,11 @@
 @use 'styles/tailwind';
 @use 'styles/material-minimal-theme';
 
+/* CDK drag preview must be above canvas-host (position:fixed, inset:0) */
+.cdk-drag-preview {
+  z-index: 9999;
+}
+
 *,
 *::before,
 *::after {
