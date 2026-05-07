@@ -176,7 +176,7 @@ Similaire à UC-03. Active Aggregates, Read Models, Bounded Contexts. Accessible
 - **RM13** — Niveaux débloqués progressivement : Big Picture actif au démarrage, Process et Design débloqués explicitement.
 - **RM14** — Une fois un niveau débloqué, il reste accessible pour la durée de vie du workshop.
 - **RM15** — L'état de déblocage est persisté et inclus dans l'export JSON.
-- **RM16** — À la création, chaque sticky reçoit une légère rotation aléatoire (±2°) fixe, persistée. Conserver la même rotation sur la durée de vie du sticky.
+- **RM16** — À la création, chaque sticky reçoit une légère rotation aléatoire (±2°) fixe, persistée. Conserver la même rotation sur la durée de vie du sticky. **Exception : `BoundedContext` reçoit toujours une rotation de 0° — conteneur droit pour accueillir d'autres stickies.**
 
 ## 6. Modèle de domaine
 
@@ -413,10 +413,17 @@ Thème Material personnalisé en profondeur pour matcher la direction visuelle.
 - Taille par défaut : 160 × 120 px
 - Coins : `border-radius: 4px`
 - Ombre : `0 2px 8px rgba(0,0,0,0.08)` au repos, `0 8px 24px rgba(0,0,0,0.15)` en hover/drag
-- **Rotation tactile** : ±2° aléatoire, fixé à la création (RM16)
+- **Rotation tactile** : ±2° aléatoire, fixé à la création (RM16) — exception : `BoundedContext` toujours à 0°
 - Transition : `transform 150ms cubic-bezier(0.2, 0.9, 0.3, 1)`
 - Texte : centré verticalement, padding généreux, truncation intelligente
 - Sélection : ring `2px` accent primaire avec offset 4 px
+- **Resize** : 4 poignées `<rect>` SVG aux coins, visibles sur sélection, 8 px écran constants (compensation zoom)
+
+**BoundedContext spécifique** :
+- Taille par défaut : 400 × 280 px (conteneur, RM06)
+- Taille minimum : 200 × 140 px
+- Label aligné en haut à gauche (surface libre pour les stickies intérieurs)
+- Rendu derrière tous les autres stickies (SVG painter order)
 
 ### 9.7 Micro-interactions
 - Drop d'un sticky : flash léger (scale 1.08 → 1.0) + ombre qui s'établit
