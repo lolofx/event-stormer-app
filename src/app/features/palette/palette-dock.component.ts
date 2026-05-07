@@ -94,6 +94,7 @@ interface DockItem {
                     [width]="48"
                     [height]="48"
                     [rotation]="0"
+                    [showDeleteButton]="false"
                   />
                   <ng-template cdkDragPreview>
                     <app-sticky-card
@@ -118,6 +119,7 @@ interface DockItem {
                   [width]="48"
                   [height]="48"
                   [rotation]="0"
+                  [showDeleteButton]="false"
                 />
                 <div
                   data-testid="lock-icon"
