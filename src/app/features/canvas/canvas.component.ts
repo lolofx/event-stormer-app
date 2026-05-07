@@ -6,8 +6,10 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { CanvasStore } from './canvas.store';
 import { FullscreenService } from '../../core/fullscreen/fullscreen.service';
+import { exportMarkdown } from '../../core/export/markdown-exporter';
 import { BackgroundGridComponent } from './background-grid.component';
 import { StickyCardComponent } from '../../shared/ui/sticky-card/sticky-card.component';
 import { ActionBarComponent } from '../../shared/ui/action-bar/action-bar.component';
@@ -181,6 +183,7 @@ export class CanvasComponent {
   protected readonly store = inject(CanvasStore);
   protected readonly workshopStore = inject(WorkshopStore);
   private readonly fullscreen = inject(FullscreenService);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly el = inject(ElementRef<HTMLElement>);
 
   protected readonly isSpaceHeld = signal(false);
@@ -382,6 +385,18 @@ export class CanvasComponent {
   }
 
   protected onExport(): void {
-    // TODO étape 10
+    const workshop = this.workshopStore.workshop();
+    if (!workshop || workshop.stickies.length === 0) {
+      this.snackBar.open('Le workshop est vide, rien à exporter.', 'OK', { duration: 4000 });
+      return;
+    }
+    const { filename, content } = exportMarkdown(workshop);
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }
