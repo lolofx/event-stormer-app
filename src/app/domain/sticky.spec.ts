@@ -73,5 +73,12 @@ describe('Sticky', () => {
       const sticky = createSticky(StickyType.ExternalSystem, 0, 0, { rotation: 1.5 });
       expect(sticky.rotation).toBe(1.5);
     });
+
+    it('should create BoundedContext with zero rotation — straight container (RM16)', () => {
+      for (let i = 0; i < 10; i++) {
+        const bc = createSticky(StickyType.BoundedContext, 0, 0);
+        expect(bc.rotation).toBe(0);
+      }
+    });
   });
 });

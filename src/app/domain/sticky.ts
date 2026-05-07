@@ -59,6 +59,6 @@ export function createSticky(
     y,
     width: options.width ?? defaultWidth,
     height: options.height ?? defaultHeight,
-    rotation: options.rotation ?? (Math.random() * 2 - 1) * ROTATION_RANGE,
+    rotation: options.rotation ?? (type === StickyType.BoundedContext ? 0 : (Math.random() * 2 - 1) * ROTATION_RANGE),
   };
 }
