@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { vi, describe, it, beforeEach, expect } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 import { signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
@@ -7,7 +7,7 @@ import { LevelUnlockService } from './level-unlock.service';
 import { WorkshopStore } from './workshop.store';
 import { Level } from '../../domain/level';
 
-function makeStore() {
+function makeStore(): { levelUnlockState: ReturnType<typeof signal<{ processUnlocked: boolean; designUnlocked: boolean }>>; activeLevel: ReturnType<typeof signal<Level>>; unlockProcess: ReturnType<typeof vi.fn>; unlockDesign: ReturnType<typeof vi.fn> } {
   return {
     levelUnlockState: signal({ processUnlocked: false, designUnlocked: false }),
     activeLevel: signal(Level.BigPicture),
@@ -16,7 +16,7 @@ function makeStore() {
   };
 }
 
-function makeDialog(result: boolean) {
+function makeDialog(result: boolean): { open: ReturnType<typeof vi.fn> } {
   return {
     open: vi.fn().mockReturnValue({ afterClosed: () => of(result) }),
   };
@@ -27,7 +27,7 @@ describe('LevelUnlockService', () => {
   let store: ReturnType<typeof makeStore>;
   let dialog: ReturnType<typeof makeDialog>;
 
-  function setup(dialogResult: boolean) {
+  function setup(dialogResult: boolean): void {
     store = makeStore();
     dialog = makeDialog(dialogResult);
     TestBed.configureTestingModule({

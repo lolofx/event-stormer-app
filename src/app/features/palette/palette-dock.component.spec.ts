@@ -48,7 +48,7 @@ function makeStore(
   };
 }
 
-function makeLevelUnlockService() {
+function makeLevelUnlockService(): { requestUnlockProcess: ReturnType<typeof vi.fn>; requestUnlockDesign: ReturnType<typeof vi.fn> } {
   return {
     requestUnlockProcess: vi.fn().mockResolvedValue(undefined),
     requestUnlockDesign: vi.fn().mockResolvedValue(undefined),

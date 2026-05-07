@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { vi, describe, it, beforeEach, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { LevelSelectorComponent } from './level-selector.component';
 import { Level } from '../../domain/level';
 import { LevelUnlockState } from '../../domain/level-unlock-state';
@@ -11,7 +11,7 @@ const LOCKED_ALL: LevelUnlockState = { processUnlocked: false, designUnlocked: f
 describe('LevelSelectorComponent', () => {
   let fixture: ComponentFixture<LevelSelectorComponent>;
 
-  function setup(activeLevel: Level, unlockState: LevelUnlockState) {
+  function setup(activeLevel: Level, unlockState: LevelUnlockState): void {
     TestBed.configureTestingModule({ imports: [LevelSelectorComponent] });
     fixture = TestBed.createComponent(LevelSelectorComponent);
     fixture.componentRef.setInput('activeLevel', activeLevel);
