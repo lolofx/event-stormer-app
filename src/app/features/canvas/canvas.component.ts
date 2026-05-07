@@ -110,6 +110,19 @@ import { type Sticky, minStickyDimensions } from '../../domain/sticky';
 
     <!-- Barre d'actions — bas-droite -->
     <app-action-bar>
+      @if (workshopStore.stickies().length === 0) {
+        <button
+          class="flex items-center justify-center w-10 h-10 text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-colors"
+          title="Charger un exemple complet"
+          aria-label="Charger un exemple Event Storming"
+          (click)="workshopStore.loadDemo()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+          </svg>
+        </button>
+        <div class="w-8 mx-auto border-t border-ui-border"></div>
+      }
       <button
         class="flex items-center justify-center w-10 h-10 text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-colors"
         title="Export Markdown (Ctrl+E)"
