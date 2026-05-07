@@ -6,6 +6,7 @@ import {
   moveSticky,
   removeSticky,
   renameWorkshop,
+  resizeSticky,
   setActiveLevel,
   unlockDesignLevel,
   unlockProcessLevel,
@@ -44,6 +45,11 @@ export class WorkshopStore {
 
   moveSticky(id: string, x: number, y: number): void {
     this._workshop.update((w) => moveSticky(w, id, x, y));
+    this.scheduleSave();
+  }
+
+  resizeSticky(id: string, x: number, y: number, width: number, height: number): void {
+    this._workshop.update((w) => resizeSticky(w, id, x, y, width, height));
     this.scheduleSave();
   }
 

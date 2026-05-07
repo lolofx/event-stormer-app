@@ -17,6 +17,18 @@ export const STICKY_DEFAULT_HEIGHT = 120;
 /** BoundedContext must be large enough to visually contain other stickies (RM06). */
 export const BC_DEFAULT_WIDTH = 400;
 export const BC_DEFAULT_HEIGHT = 280;
+
+export const STICKY_MIN_WIDTH = 80;
+export const STICKY_MIN_HEIGHT = 60;
+export const BC_MIN_WIDTH = 200;
+export const BC_MIN_HEIGHT = 140;
+
+export function minStickyDimensions(type: StickyType): { width: number; height: number } {
+  return type === StickyType.BoundedContext
+    ? { width: BC_MIN_WIDTH, height: BC_MIN_HEIGHT }
+    : { width: STICKY_MIN_WIDTH, height: STICKY_MIN_HEIGHT };
+}
+
 const ROTATION_RANGE = 2;
 
 export interface CreateStickyOptions {

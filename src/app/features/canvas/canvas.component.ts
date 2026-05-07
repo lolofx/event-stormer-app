@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   HostListener,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -15,7 +16,7 @@ import { PaletteDockComponent } from '../palette/palette-dock.component';
 import { WorkshopStore } from '../workshop/workshop.store';
 import { StickyType } from '../../domain/sticky-type';
 import { screenToCanvas } from './coordinate-translator';
-import type { Sticky } from '../../domain/sticky';
+import { type Sticky, minStickyDimensions } from '../../domain/sticky';
 
 @Component({
   selector: 'app-canvas',
@@ -46,13 +47,15 @@ import type { Sticky } from '../../domain/sticky';
             <foreignObject
               [attr.x]="s.x"
               [attr.y]="s.y"
-              width="200"
-              height="160"
+              [attr.width]="s.width"
+              [attr.height]="s.height"
               overflow="visible"
             >
               <app-sticky-card
                 [type]="s.type"
                 [label]="s.label"
+                [width]="s.width"
+                [height]="s.height"
                 [rotation]="s.rotation"
                 [selected]="selectedId() === s.id"
                 [isEditing]="editingId() === s.id"
@@ -65,6 +68,28 @@ import type { Sticky } from '../../domain/sticky';
                 (deleteRequest)="onDeleteSticky(s.id)"
               />
             </foreignObject>
+            @if (selectedId() === s.id && !editingId()) {
+              <rect fill="white" stroke="#0a0a0a" stroke-width="1.5" rx="1"
+                vector-effect="non-scaling-stroke" style="cursor: nw-resize"
+                [attr.x]="s.x - handleHalf()" [attr.y]="s.y - handleHalf()"
+                [attr.width]="handleFull()" [attr.height]="handleFull()"
+                (mousedown)="onResizeStart($event, s, 'nw')" />
+              <rect fill="white" stroke="#0a0a0a" stroke-width="1.5" rx="1"
+                vector-effect="non-scaling-stroke" style="cursor: ne-resize"
+                [attr.x]="s.x + s.width - handleHalf()" [attr.y]="s.y - handleHalf()"
+                [attr.width]="handleFull()" [attr.height]="handleFull()"
+                (mousedown)="onResizeStart($event, s, 'ne')" />
+              <rect fill="white" stroke="#0a0a0a" stroke-width="1.5" rx="1"
+                vector-effect="non-scaling-stroke" style="cursor: se-resize"
+                [attr.x]="s.x + s.width - handleHalf()" [attr.y]="s.y + s.height - handleHalf()"
+                [attr.width]="handleFull()" [attr.height]="handleFull()"
+                (mousedown)="onResizeStart($event, s, 'se')" />
+              <rect fill="white" stroke="#0a0a0a" stroke-width="1.5" rx="1"
+                vector-effect="non-scaling-stroke" style="cursor: sw-resize"
+                [attr.x]="s.x - handleHalf()" [attr.y]="s.y + s.height - handleHalf()"
+                [attr.width]="handleFull()" [attr.height]="handleFull()"
+                (mousedown)="onResizeStart($event, s, 'sw')" />
+            }
           }
         </g>
       </svg>
@@ -154,12 +179,28 @@ export class CanvasComponent {
 
   protected readonly stickies = this.workshopStore.stickies;
 
+  // Handle size stays constant in screen pixels regardless of zoom (8px)
+  protected readonly handleHalf = computed(() => 4 / this.store.viewport().zoom);
+  protected readonly handleFull = computed(() => 8 / this.store.viewport().zoom);
+
   private lastMouseX = 0;
   private lastMouseY = 0;
 
   // Sticky move tracking
   private stickyMove: { id: string; startX: number; startY: number; startCX: number; startCY: number } | null = null;
   private hasMoved = false;
+
+  // Resize tracking — stores canvas coords and original sticky geometry at mousedown
+  private resizeOp: {
+    id: string;
+    corner: 'nw' | 'ne' | 'se' | 'sw';
+    startCX: number;
+    startCY: number;
+    origX: number;
+    origY: number;
+    origW: number;
+    origH: number;
+  } | null = null;
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent): void {
@@ -189,6 +230,10 @@ export class CanvasComponent {
       this.lastMouseY = e.clientY;
       return;
     }
+    if (this.resizeOp) {
+      this.doResize(e);
+      return;
+    }
     if (this.stickyMove) {
       const rect = this.el.nativeElement.getBoundingClientRect();
       const cp = screenToCanvas(e.clientX, e.clientY, rect.left, rect.top, this.store.viewport());
@@ -212,6 +257,7 @@ export class CanvasComponent {
       this.stickyMove = null;
       this.hasMoved = false;
     }
+    this.resizeOp = null;
   }
 
   protected onMouseDown(e: MouseEvent): void {
@@ -273,6 +319,35 @@ export class CanvasComponent {
       this.selectedId.set(newSticky.id);
       this.editingId.set(newSticky.id);
     }
+  }
+
+  protected onResizeStart(e: MouseEvent, s: Sticky, corner: 'nw' | 'ne' | 'se' | 'sw'): void {
+    e.stopPropagation();
+    const rect = this.el.nativeElement.getBoundingClientRect();
+    const cp = screenToCanvas(e.clientX, e.clientY, rect.left, rect.top, this.store.viewport());
+    this.resizeOp = { id: s.id, corner, startCX: cp.x, startCY: cp.y, origX: s.x, origY: s.y, origW: s.width, origH: s.height };
+  }
+
+  private doResize(e: MouseEvent): void {
+    if (!this.resizeOp) return;
+    const rect = this.el.nativeElement.getBoundingClientRect();
+    const cp = screenToCanvas(e.clientX, e.clientY, rect.left, rect.top, this.store.viewport());
+    const dx = cp.x - this.resizeOp.startCX;
+    const dy = cp.y - this.resizeOp.startCY;
+    const { origX, origY, origW, origH, corner, id } = this.resizeOp;
+
+    const sticky = this.stickies().find((s) => s.id === id);
+    if (!sticky) return;
+    const min = minStickyDimensions(sticky.type);
+
+    let newX = origX, newY = origY, newW = origW, newH = origH;
+    switch (corner) {
+      case 'se': newW = Math.max(min.width, origW + dx); newH = Math.max(min.height, origH + dy); break;
+      case 'sw': newW = Math.max(min.width, origW - dx); newX = origX + origW - newW; newH = Math.max(min.height, origH + dy); break;
+      case 'ne': newW = Math.max(min.width, origW + dx); newH = Math.max(min.height, origH - dy); newY = origY + origH - newH; break;
+      case 'nw': newW = Math.max(min.width, origW - dx); newX = origX + origW - newW; newH = Math.max(min.height, origH - dy); newY = origY + origH - newH; break;
+    }
+    this.workshopStore.resizeSticky(id, newX, newY, newW, newH);
   }
 
   protected clearEditing(): void {
