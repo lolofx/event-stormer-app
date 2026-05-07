@@ -6,8 +6,12 @@ import {
   moveSticky,
   removeSticky,
   renameWorkshop,
+  setActiveLevel,
+  unlockDesignLevel,
+  unlockProcessLevel,
   updateStickyLabel,
 } from '../../domain/workshop';
+import { Level } from '../../domain/level';
 import { createSticky } from '../../domain/sticky';
 import { StickyType } from '../../domain/sticky-type';
 
@@ -50,6 +54,21 @@ export class WorkshopStore {
 
   rename(name: string): void {
     this._workshop.update((w) => renameWorkshop(w, name));
+    this.scheduleSave();
+  }
+
+  unlockProcess(): void {
+    this._workshop.update((w) => unlockProcessLevel(w));
+    this.scheduleSave();
+  }
+
+  unlockDesign(): void {
+    this._workshop.update((w) => unlockDesignLevel(w));
+    this.scheduleSave();
+  }
+
+  setActiveLevel(level: Level): void {
+    this._workshop.update((w) => setActiveLevel(w, level));
     this.scheduleSave();
   }
 
