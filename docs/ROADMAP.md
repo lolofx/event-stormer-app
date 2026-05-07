@@ -12,7 +12,7 @@
 | 7 | Composants UI custom | #10 | ✅ |
 | 8 | Palette dock pédagogique + WorkshopStore | #11 | ✅ |
 | 9 | Progression des niveaux | #12 | ✅ |
-| 9b | Resize interactif des stickies | — | ✅ |
+| 9b | Resize interactif des stickies + démo | — | ✅ |
 | 10 | Export Markdown + Mermaid | — | ⬜ |
 | 11 | Garde-fou nouveau workshop + import JSON | — | ⬜ |
 | 12 | Azure SWA + Lighthouse CI | — | ⬜ |
@@ -48,6 +48,8 @@ Tous les stickies sont redimensionnables. Le BoundedContext en est le cas priori
 - Rendu en premier dans le groupe SVG (peintre model) → les autres stickies passent par-dessus et restent interactifs
 
 **Note** : `BC_DEFAULT_WIDTH = 400 / BC_DEFAULT_HEIGHT = 280` — fix du `foreignObject` hardcodé 200×160 → dimensions réelles ; BC s'affiche maintenant à sa vraie taille dès la création.
+
+**Bouton démo** (`domain/demo.ts`) : charge un scénario "Livraison de pizza" complet (3 BC × tous les types de stickies, niveaux Process + Design débloqués) si et seulement si le canvas est vide. Bouton ✨ dans la barre d'actions, disparaît dès le premier sticky posé.
 
 ## Étape 10 — Export Markdown + Mermaid
 
