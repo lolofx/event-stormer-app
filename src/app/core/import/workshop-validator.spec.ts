@@ -76,7 +76,9 @@ describe('parseWorkshopJson', () => {
     w = addSticky(w, createSticky(StickyType.Command, 0, 0, { rotation: 0 }));
     const { content } = exportJson(w);
     const data = JSON.parse(content) as { stickies: { type: string }[] };
-    data.stickies[0]!.type = 'InvalidType';
+    const first = data.stickies[0];
+    if (!first) throw new Error('expected at least one sticky');
+    first.type = 'InvalidType';
     expect('error' in parseWorkshopJson(data)).toBe(true);
   });
 
