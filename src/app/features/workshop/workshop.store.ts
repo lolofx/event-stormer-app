@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { WorkshopPersistenceService } from '../../core/persistence';
 import {
+  Workshop,
   addSticky,
   createWorkshop,
   moveSticky,
@@ -82,6 +83,16 @@ export class WorkshopStore {
 
   setActiveLevel(level: Level): void {
     this._workshop.update((w) => setActiveLevel(w, level));
+    this.scheduleSave();
+  }
+
+  resetWorkshop(): void {
+    this._workshop.set(createWorkshop('Mon atelier DDD'));
+    this.scheduleSave();
+  }
+
+  loadWorkshop(workshop: Workshop): void {
+    this._workshop.set(workshop);
     this.scheduleSave();
   }
 

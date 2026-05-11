@@ -16,6 +16,8 @@ import { ActionBarComponent } from '../../shared/ui/action-bar/action-bar.compon
 import { EditableTitleComponent } from '../../shared/ui/editable-title/editable-title.component';
 import { PaletteDockComponent } from '../palette/palette-dock.component';
 import { WorkshopStore } from '../workshop/workshop.store';
+import { NewWorkshopService } from '../workshop/new-workshop.service';
+import { ImportWorkshopService } from '../workshop/import-workshop.service';
 import { StickyType } from '../../domain/sticky-type';
 import { screenToCanvas } from './coordinate-translator';
 import { type Sticky, minStickyDimensions } from '../../domain/sticky';
@@ -142,6 +144,7 @@ import { type Sticky, minStickyDimensions } from '../../domain/sticky';
         class="flex items-center justify-center w-10 h-10 text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-colors"
         title="Nouveau workshop (Ctrl+N)"
         aria-label="Nouveau workshop"
+        (click)="onNewWorkshop()"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -152,6 +155,7 @@ import { type Sticky, minStickyDimensions } from '../../domain/sticky';
         class="flex items-center justify-center w-10 h-10 text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-colors"
         title="Importer un workshop"
         aria-label="Importer un workshop"
+        (click)="importWorkshop.triggerImport()"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
@@ -183,6 +187,8 @@ export class CanvasComponent {
   protected readonly store = inject(CanvasStore);
   protected readonly workshopStore = inject(WorkshopStore);
   private readonly fullscreen = inject(FullscreenService);
+  protected readonly newWorkshop = inject(NewWorkshopService);
+  protected readonly importWorkshop = inject(ImportWorkshopService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly el = inject(ElementRef<HTMLElement>);
 
@@ -235,6 +241,7 @@ export class CanvasComponent {
     if (e.code === 'KeyF') void this.fullscreen.toggle();
     if (e.code === 'KeyD') this.dockCollapsed.set(!this.dockCollapsed());
     if (e.ctrlKey && e.code === 'KeyE') { e.preventDefault(); this.onExport(); }
+    if (e.ctrlKey && e.code === 'KeyN') { e.preventDefault(); void this.newWorkshop.requestNewWorkshop(); }
     if (e.code === 'Delete' || e.code === 'Backspace') {
       const id = this.selectedId();
       if (id) { this.workshopStore.removeSticky(id); this.selectedId.set(null); }
@@ -378,6 +385,10 @@ export class CanvasComponent {
   protected clearEditing(): void {
     this.editingId.set(null);
     this.selectedId.set(null);
+  }
+
+  protected onNewWorkshop(): void {
+    void this.newWorkshop.requestNewWorkshop();
   }
 
   protected toggleFullscreen(): void {
