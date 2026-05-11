@@ -15,7 +15,7 @@
 | 9b | Resize interactif des stickies + démo | — | ✅ |
 | 10 | Export Markdown + Mermaid | — | ✅ |
 | 11 | Garde-fou nouveau workshop + import JSON | — | ✅ |
-| 12 | Azure SWA + Lighthouse CI | — | ⬜ |
+| 12 | Azure SWA + Lighthouse CI | — | ✅ |
 
 ## Étape 9 — Progression des niveaux
 
